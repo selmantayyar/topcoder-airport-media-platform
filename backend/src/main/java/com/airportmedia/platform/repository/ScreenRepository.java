@@ -1,0 +1,15 @@
+package com.airportmedia.platform.repository;
+
+import com.airportmedia.platform.common.enums.ScreenStatus;
+import com.airportmedia.platform.domain.entity.Screen;
+import io.quarkus.hibernate.orm.panache.PanacheRepository;
+import jakarta.enterprise.context.ApplicationScoped;
+import java.util.Optional;
+
+@ApplicationScoped
+public class ScreenRepository implements PanacheRepository<Screen> {
+
+    public Optional<Screen> firstOnline() {
+        return find("status", ScreenStatus.ONLINE).firstResultOptional();
+    }
+}

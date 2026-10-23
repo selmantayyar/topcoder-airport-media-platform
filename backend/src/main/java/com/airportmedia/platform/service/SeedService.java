@@ -26,7 +26,6 @@ import com.airportmedia.platform.domain.entity.Campaign;
 import com.airportmedia.platform.domain.entity.Checkpoint;
 import com.airportmedia.platform.domain.entity.Creative;
 import com.airportmedia.platform.domain.entity.Flight;
-import com.airportmedia.platform.domain.entity.FlightEvent;
 import com.airportmedia.platform.domain.entity.GateAssignment;
 import com.airportmedia.platform.domain.entity.Impression;
 import com.airportmedia.platform.domain.entity.Outlet;
@@ -36,6 +35,7 @@ import com.airportmedia.platform.domain.entity.Redemption;
 import com.airportmedia.platform.domain.entity.Screen;
 import com.airportmedia.platform.domain.entity.Terminal;
 import com.airportmedia.platform.domain.entity.Zone;
+import com.airportmedia.platform.domain.model.mapper.FlightEventMapper;
 import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.persistence.EntityManager;
@@ -71,6 +71,7 @@ public class SeedService {
     private final AodbTranslator aodbTranslator;
     private final FlightEventSourceProvider eventSource;
     private final AidxTranslator aidxTranslator;
+    private final FlightEventMapper flightEventMapper;
 
     private final int flightCount;
     private final int screenCount;
@@ -87,6 +88,7 @@ public class SeedService {
             AodbTranslator aodbTranslator,
             FlightEventSourceProvider eventSource,
             AidxTranslator aidxTranslator,
+            FlightEventMapper flightEventMapper,
             @ConfigProperty(name = "app.seed.flights", defaultValue = "900") int flightCount,
             @ConfigProperty(name = "app.seed.screens", defaultValue = "180") int screenCount,
             @ConfigProperty(name = "app.seed.outlets", defaultValue = "40") int outletCount,
@@ -100,6 +102,7 @@ public class SeedService {
         this.aodbTranslator = aodbTranslator;
         this.eventSource = eventSource;
         this.aidxTranslator = aidxTranslator;
+        this.flightEventMapper = flightEventMapper;
         this.flightCount = flightCount;
         this.screenCount = screenCount;
         this.outletCount = outletCount;
@@ -271,17 +274,7 @@ public class SeedService {
 
             String xml = eventSource.active().buildFlightLegNotif(change);
             var update = aidxTranslator.parse(xml);
-
-            FlightEvent event = new FlightEvent();
-            event.flight = flight;
-            event.type = update.type();
-            event.occurredAt = update.occurredAt();
-            event.source = "AIDX";
-            event.messageRef = update.messageRef();
-            event.newGate = update.newGate();
-            event.newStatus = update.newStatus();
-            event.delayMinutes = update.delayMinutes();
-            em.persist(event);
+            em.persist(flightEventMapper.toFlightEvent(update, flight));
             created++;
         }
         em.flush();
