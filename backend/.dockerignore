@@ -1,0 +1,5 @@
+# The image builds from source (multi-stage), so ship the sources and build
+# files but never the local build output or IDE cruft.
+target
+.idea
+*.iml

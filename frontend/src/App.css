@@ -1,0 +1,107 @@
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* Header */
+.app-header {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 10px 20px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.app-header__brand {
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+}
+
+/* Role switcher */
+.role-switcher {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  flex: 1;
+}
+
+.role-switcher__btn {
+  font: inherit;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.role-switcher__btn:hover {
+  color: var(--text);
+}
+
+.role-switcher__btn.is-active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+/* Live clock */
+.live-clock {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--mono);
+  white-space: nowrap;
+}
+
+.live-clock__dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--text-muted);
+}
+
+.live-clock--live .live-clock__dot {
+  background: var(--ok);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ok) 25%, transparent);
+}
+
+.live-clock--error .live-clock__dot {
+  background: var(--bad);
+}
+
+.live-clock__status {
+  color: var(--text-muted);
+  font-family: var(--sans);
+  font-size: 13px;
+}
+
+.live-clock__value {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+/* Main */
+.app-main {
+  flex: 1;
+  padding: 24px 20px;
+}
+
+.placeholder-panel {
+  max-width: 640px;
+  margin: 48px auto;
+  padding: 28px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.placeholder-panel p {
+  color: var(--text-muted);
+}

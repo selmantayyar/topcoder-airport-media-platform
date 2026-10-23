@@ -1,0 +1,50 @@
+:root {
+  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
+  --mono: ui-monospace, 'Roboto Mono', Consolas, monospace;
+  font: 15px/1.5 var(--sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Light theme — the business roles (Retailer, Media Manager, Airline). */
+html[data-theme='light'] {
+  --bg: #f5f6f8;
+  --panel: #ffffff;
+  --border: #e3e6ec;
+  --text: #1c2430;
+  --text-muted: #6b7482;
+  --accent: #2563eb;
+  --ok: #16a34a;
+  --warn: #d97706;
+  --bad: #dc2626;
+  color-scheme: light;
+}
+
+/* Dark "control room" theme — Platform Admin only. */
+html[data-theme='dark'] {
+  --bg: #0d1117;
+  --panel: #161b22;
+  --border: #272d38;
+  --text: #e6edf3;
+  --text-muted: #8b949e;
+  --accent: #58a6ff;
+  --ok: #3fb950;
+  --warn: #d29922;
+  --bad: #f85149;
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+}
+
+#root {
+  min-height: 100vh;
+}
+
+h1 {
+  font-size: 28px;
+  margin: 0 0 12px;
+}
