@@ -4,10 +4,10 @@
 
 **Blocked by:** None — can start immediately
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] `docker compose up` (or equivalent single command) brings up Postgres + backend + frontend with no manual steps
-- [ ] App shell renders with a role switcher in the header (roles can be placeholder stubs)
-- [ ] Dark theme applies when "Platform Admin" is selected; light theme applies for other roles
-- [ ] A backend SSE endpoint pushes a server clock/tick value at least once per second
-- [ ] The frontend subscribes to that SSE stream and renders the live value, visibly updating without a page reload
+- [x] `docker compose up` (or equivalent single command) brings up Postgres + backend + frontend with no manual steps
+- [x] App shell renders with a role switcher in the header (roles can be placeholder stubs)
+- [x] Dark theme applies when "Platform Admin" is selected; light theme applies for other roles
+- [x] A backend SSE endpoint pushes a server clock/tick value at least once per second
+- [x] The frontend subscribes to that SSE stream and renders the live value, visibly updating without a page reload

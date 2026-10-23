@@ -55,6 +55,10 @@
             <artifactId>quarkus-jdbc-postgresql</artifactId>
         </dependency>
         <dependency>
+            <groupId>com.fasterxml.jackson.dataformat</groupId>
+            <artifactId>jackson-dataformat-xml</artifactId>
+        </dependency>
+        <dependency>
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-arc</artifactId>
         </dependency>
