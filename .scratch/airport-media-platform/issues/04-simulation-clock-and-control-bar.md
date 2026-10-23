@@ -4,10 +4,10 @@
 
 **Blocked by:** 03 — Mock data generator + AODB/AIDX/ACRIS adapters
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] The simulation clock's current time and speed live on the backend and broadcast over the same SSE channel used elsewhere
-- [ ] A control bar in the app shell (visible to all roles) can play, pause, and set speed to 1x/10x/60x
-- [ ] Jump-to-time moves the simulation instantly and all connected views reflect the new time within 2 seconds
-- [ ] "Inject event" buttons exist for: delay a flight, change a gate, take a screen offline — each one visibly changes the relevant mock flight/screen state
-- [ ] Running at 60x does not cause visible UI lag or stale state
+- [x] The simulation clock's current time and speed live on the backend and broadcast over the same SSE channel used elsewhere
+- [x] A control bar in the app shell (visible to all roles) can play, pause, and set speed to 1x/10x/60x
+- [x] Jump-to-time moves the simulation instantly and all connected views reflect the new time within 2 seconds
+- [x] "Inject event" buttons exist for: delay a flight, change a gate, take a screen offline — each one visibly changes the relevant mock flight/screen state
+- [x] Running at 60x does not cause visible UI lag or stale state

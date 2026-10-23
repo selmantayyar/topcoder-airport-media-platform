@@ -177,3 +177,173 @@
 .placeholder-panel p {
   color: var(--text-muted);
 }
+
+.placeholder-panel--slim {
+  max-width: none;
+  margin: 0 0 20px;
+  padding: 16px 20px;
+}
+
+/* Zone presence read view */
+.presence__head h2 {
+  margin: 0 0 4px;
+}
+
+.presence__sub {
+  color: var(--text-muted);
+  margin: 0 0 10px;
+  max-width: 70ch;
+}
+
+.presence__totals {
+  display: flex;
+  gap: 18px;
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+}
+
+.presence__totals strong {
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.presence__error {
+  color: var(--bad);
+}
+
+.presence__empty {
+  color: var(--text-muted);
+}
+
+.presence__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+}
+
+.zone-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.zone-card__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.zone-card__top h3 {
+  margin: 0;
+  font-size: 15px;
+}
+
+.zone-card__kind {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--text-muted);
+}
+
+.zone-card__count {
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+}
+
+.zone-card__count strong {
+  font-size: 22px;
+  font-variant-numeric: tabular-nums;
+}
+
+.zone-card__count span {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.zone-card__noprofile {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.profile-bar {
+  display: flex;
+  height: 8px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--border);
+}
+
+.profile-bar__seg {
+  height: 100%;
+}
+
+.profile-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px 10px;
+  margin: 0;
+}
+
+.profile-grid dt {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--text-muted);
+}
+
+.profile-grid dd {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.zone-card__flights {
+  list-style: none;
+  margin: 0;
+  padding: 8px 0 0;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+}
+
+.zone-card__flights li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-muted);
+}
+
+.zone-card__fnum {
+  font-family: var(--mono);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.zone-card__gate,
+.zone-card__eta {
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+}
+
+.zone-card__eta {
+  margin-left: 0;
+}
+
+.zone-card__fpax {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: var(--text);
+  min-width: 36px;
+  text-align: right;
+}

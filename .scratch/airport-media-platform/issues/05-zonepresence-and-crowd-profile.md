@@ -4,9 +4,9 @@
 
 **Blocked by:** 04 — Simulation clock & control bar
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] `ZonePresence` is computed per zone per 5-minute window from nearby flights (pax count × time-to-boarding) and ACRIS queue mocks
-- [ ] Each flight has a plausible Crowd Profile (trip purpose, party type, age band, gender split, cabin/spend tier, nationality/language, dwell/delay context, crowd size) generated per the spec's mock-source rules
-- [ ] Profiles are plausible by the spec's own examples (e.g. a Monday 07:00 domestic flight skews business 25-44; a Friday evening holiday route skews families/couples)
-- [ ] A simple read view (debug page or API response) shows live ZonePresence and Crowd Profile numbers changing as the simulation clock advances
+- [x] `ZonePresence` is computed per zone per 5-minute window from nearby flights (pax count × time-to-boarding) and ACRIS queue mocks
+- [x] Each flight has a plausible Crowd Profile (trip purpose, party type, age band, gender split, cabin/spend tier, nationality/language, dwell/delay context, crowd size) generated per the spec's mock-source rules
+- [x] Profiles are plausible by the spec's own examples (e.g. a Monday 07:00 domestic flight skews business 25-44; a Friday evening holiday route skews families/couples)
+- [x] A simple read view (debug page or API response) shows live ZonePresence and Crowd Profile numbers changing as the simulation clock advances
