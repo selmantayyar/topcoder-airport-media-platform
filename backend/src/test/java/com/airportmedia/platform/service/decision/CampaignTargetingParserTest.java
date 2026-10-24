@@ -38,4 +38,16 @@ class CampaignTargetingParserTest {
         assertThat(t.spendTarget()).isNull();
         assertThat(t.spendTargetOrDefault()).isEqualTo(SpendTier.MEDIUM);
     }
+
+    @Test
+    void parsesZoneScreenAndDelayTargeting() {
+        CampaignTargeting t = parser.parse(
+                "{\"gates\":[],\"zoneIds\":[3,4],\"screenIds\":[17]}",
+                "{\"minDelayMinutes\":30}",
+                null);
+
+        assertThat(t.zoneIds()).containsExactlyInAnyOrder(3L, 4L);
+        assertThat(t.screenIds()).containsExactly(17L);
+        assertThat(t.minDelayMinutes()).isEqualTo(30);
+    }
 }

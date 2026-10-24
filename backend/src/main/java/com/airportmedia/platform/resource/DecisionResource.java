@@ -2,15 +2,12 @@ package com.airportmedia.platform.resource;
 
 import com.airportmedia.platform.domain.entity.DecisionLog;
 import com.airportmedia.platform.domain.model.output.DecisionLogView;
-import com.airportmedia.platform.domain.model.output.DecisionResult;
 import com.airportmedia.platform.repository.DecisionLogRepository;
-import com.airportmedia.platform.service.decision.DecisionService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.NotFoundException;
-import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
@@ -18,18 +15,16 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import java.util.List;
 
-/** Query the decision evidence trail, and compute or run a screen's current decision. */
+/** Query the persisted decision evidence trail. (A screen's live decision lives on {@link ScreenResource}.) */
 @Path("/api")
 @Produces(MediaType.APPLICATION_JSON)
 public class DecisionResource {
 
     private final DecisionLogRepository decisionLogs;
-    private final DecisionService decisions;
     private final ObjectMapper mapper;
 
-    public DecisionResource(DecisionLogRepository decisionLogs, DecisionService decisions, ObjectMapper mapper) {
+    public DecisionResource(DecisionLogRepository decisionLogs, ObjectMapper mapper) {
         this.decisionLogs = decisionLogs;
-        this.decisions = decisions;
         this.mapper = mapper;
     }
 
@@ -52,18 +47,6 @@ public class DecisionResource {
         DecisionLog log = decisionLogs.findByIdOptional(id)
                 .orElseThrow(() -> new NotFoundException("No decision " + id));
         return toView(log);
-    }
-
-    @GET
-    @Path("/screens/{id}/decision")
-    public DecisionResult currentDecision(@PathParam("id") long screenId) {
-        return decisions.preview(screenId);
-    }
-
-    @POST
-    @Path("/screens/{id}/decision/run")
-    public DecisionResult runDecision(@PathParam("id") long screenId) {
-        return decisions.decideAndExecute(screenId);
     }
 
     private DecisionLogView toView(DecisionLog log) {

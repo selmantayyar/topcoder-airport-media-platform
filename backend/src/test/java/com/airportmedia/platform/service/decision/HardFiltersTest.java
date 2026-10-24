@@ -118,4 +118,34 @@ class HardFiltersTest {
 
         assertThat(filters.firstStaticFailure(c, inputs().build())).containsIgnoringCase("budget");
     }
+
+    @Test
+    void placementMatchesByZone() {
+        CampaignView c = camp().targeting(DecisionFixtures.placementTargeting(Set.of("7"), Set.of(10L), Set.of())).build();
+
+        assertThat(filters.firstStaticFailure(c, inputs().gates(Set.of()).build())).isNull();
+    }
+
+    @Test
+    void placementMatchesByScreen() {
+        CampaignView c = camp().targeting(DecisionFixtures.placementTargeting(Set.of("7"), Set.of(), Set.of(1L))).build();
+
+        assertThat(filters.firstStaticFailure(c, inputs().gates(Set.of()).build())).isNull();
+    }
+
+    @Test
+    void placementFailsWhenNoGateZoneOrScreenMatches() {
+        CampaignView c = camp().targeting(DecisionFixtures.placementTargeting(Set.of("7"), Set.of(99L), Set.of(99L))).build();
+
+        assertThat(filters.firstStaticFailure(c, inputs().build())).containsIgnoringCase("placement");
+    }
+
+    @Test
+    void delayRuleDropsCampaignWhenTheCrowdIsNotDelayedEnough() {
+        CampaignView c = camp().targeting(DecisionFixtures.delayTargeting(30)).build();
+
+        assertThat(filters.firstFailure(c, inputs().profile(DecisionFixtures.delayedProfile(10)).build()))
+                .containsIgnoringCase("delay");
+        assertThat(filters.firstFailure(c, inputs().profile(DecisionFixtures.delayedProfile(45)).build())).isNull();
+    }
 }

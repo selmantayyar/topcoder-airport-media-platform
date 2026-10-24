@@ -34,6 +34,7 @@ public class CampaignTargetingParser {
         Haul haul = text(filters.get("haul")) == null ? null : Haul.valueOf(text(filters.get("haul")));
         int minCrowd = filters.path("minCrowd").asInt(0);
         int minDwell = filters.path("minDwellMinutes").asInt(0);
+        int minDelay = filters.path("minDelayMinutes").asInt(0);
         String restricted = text(filters.get("restricted"));
 
         SpendTier spendTarget = text(weights.get("spendTarget")) == null
@@ -41,10 +42,13 @@ public class CampaignTargetingParser {
 
         return new CampaignTargeting(
                 gates,
+                longs(placement.get("zoneIds")),
+                longs(placement.get("screenIds")),
                 haul,
                 destinations,
                 minCrowd,
                 minDwell,
+                minDelay,
                 restricted,
                 spendTarget,
                 weights.path("business").asDouble(0),
@@ -67,6 +71,14 @@ public class CampaignTargetingParser {
         Set<String> out = new LinkedHashSet<>();
         if (array != null && array.isArray()) {
             array.forEach(node -> out.add(node.asText()));
+        }
+        return out;
+    }
+
+    private static Set<Long> longs(JsonNode array) {
+        Set<Long> out = new LinkedHashSet<>();
+        if (array != null && array.isArray()) {
+            array.forEach(node -> out.add(node.asLong()));
         }
         return out;
     }

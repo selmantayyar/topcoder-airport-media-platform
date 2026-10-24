@@ -6,52 +6,37 @@ import {
   type LabelCount,
   type OutletSummary,
   type PassengerFlow,
-  type RetailerSummary,
 } from '../server/api';
 import { useServerEvents, type ServerEvent } from '../server/stream';
 
 /**
- * Retailer live dashboard: pick a company and watch its impression → scan → redemption funnel,
- * attributed revenue, and next-60/120-minute footfall. Polls every few seconds and refetches
- * immediately on redemption/scan events, so a QR claim shows up within ~2s.
+ * Retailer live dashboard for one company: its impression → scan → redemption funnel, attributed
+ * revenue, and next-60/120-minute footfall. Polls every few seconds and refetches immediately on
+ * redemption/scan events, so a QR claim shows up within ~2s. Remount (via `key`) to switch company.
  */
-export function RetailerDashboard() {
-  const [companies, setCompanies] = useState<RetailerSummary[]>([]);
-  const [selected, setSelected] = useState<number | null>(null);
+export function RetailerDashboard({ advertiserId }: { advertiserId: number }) {
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
   const [flow, setFlow] = useState<PassengerFlow | null>(null);
   const [outlets, setOutlets] = useState<OutletSummary[]>([]);
   const [outletId, setOutletId] = useState<number | null>(null);
   const [flowMinutes, setFlowMinutes] = useState<FlowMinutes>(120);
-  const selectedRef = useRef<number | null>(null);
   const outletRef = useRef<number | null>(null);
 
-  useEffect(() => {
-    retailers.list().then((list) => {
-      setCompanies(list);
-      if (list.length > 0) setSelected((cur) => cur ?? list[0].id);
-    });
-  }, []);
-
   const refresh = useCallback(() => {
-    const id = selectedRef.current;
-    if (id == null) return;
-    retailers.metrics(id).then(setMetrics).catch(() => undefined);
-    retailers.flow(id, outletRef.current).then(setFlow).catch(() => undefined);
-  }, []);
+    retailers.metrics(advertiserId).then(setMetrics).catch(() => undefined);
+    retailers.flow(advertiserId, outletRef.current).then(setFlow).catch(() => undefined);
+  }, [advertiserId]);
 
   useEffect(() => {
-    selectedRef.current = selected;
     outletRef.current = outletId;
     refresh();
     const timer = setInterval(refresh, 3000);
     return () => clearInterval(timer);
-  }, [selected, outletId, refresh]);
+  }, [outletId, refresh]);
 
   useEffect(() => {
-    if (selected == null) return;
-    retailers.outlets(selected).then(setOutlets).catch(() => undefined);
-  }, [selected]);
+    retailers.outlets(advertiserId).then(setOutlets).catch(() => undefined);
+  }, [advertiserId]);
 
   // A claim/scan anywhere should surface on this dashboard within ~2s.
   useServerEvents(
@@ -67,30 +52,6 @@ export function RetailerDashboard() {
 
   return (
     <section className="retail">
-      <header className="retail__head">
-        <h2>Retailer dashboard</h2>
-        <label className="retail__picker">
-          <span>Company</span>
-          <select
-            value={selected ?? ''}
-            onChange={(e) => {
-              setMetrics(null);
-              setFlow(null);
-              setOutlets([]);
-              setOutletId(null);
-              setSelected(Number(e.target.value));
-            }}
-            aria-label="Select retail company"
-          >
-            {companies.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name} ({c.kind === 'FNB' ? 'F&B' : 'Retail'} · {c.outletCount} outlet{c.outletCount === 1 ? '' : 's'})
-              </option>
-            ))}
-          </select>
-        </label>
-      </header>
-
       <div className="kpi-row">
         <StatTile label="Impressions" value={metrics?.impressions} />
         <StatTile label="Scans" value={metrics?.scans} />

@@ -35,4 +35,9 @@ public class PromoCode {
     public String parentCode;
 
     public boolean redeemed;
+
+    /** The mobile claim page for this code; prefix with the LAN base URL to build the QR link. */
+    public String claimPath() {
+        return "/claim/" + code;
+    }
 }

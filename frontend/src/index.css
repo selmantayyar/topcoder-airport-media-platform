@@ -142,6 +142,7 @@ h1 {
 .why__candidates table { width: 100%; border-collapse: collapse; font-size: 13px; }
 .why__candidates th, .why__candidates td { text-align: right; padding: 6px 8px; border-bottom: 1px solid #1b2636; }
 .why__candidates th:first-child, .why__candidates td:first-child { text-align: left; }
+.why__candidates td:first-child { max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .why__candidates .is-winner { background: rgba(127,230,169,.12); }
 .why__score { font-weight: 700; font-variant-numeric: tabular-nums; }
 
@@ -162,6 +163,9 @@ h1 {
 .claim__outcome--claimed { background: #e8f8ee; color: #15803d; }
 .claim__outcome--already_claimed { background: #fff6e6; color: #b45309; }
 .claim__outcome--expired { background: #fdeaea; color: #b91c1c; }
+.claim__share { display: flex; flex-direction: column; align-items: center; gap: 8px; margin-top: 14px; color: #1c2430; }
+.claim__share a { font-size: 12px; word-break: break-all; color: #2563eb; }
+.claim__btn--secondary { background: #fff; color: #2563eb; border: 2px solid #2563eb; font-size: 16px; padding: 12px; }
 .claim__code { font-family: var(--mono); font-weight: 700; letter-spacing: 1px; }
 .claim__msg { color: #6b7482; }
 .claim__msg--bad { color: #dc2626; }

@@ -73,4 +73,9 @@ public class Flight {
 
     public String checkInCounters;
     public String belt;
+
+    /** The best-known departure: the estimate when one exists (e.g. after a delay), else the schedule. */
+    public Instant departureTime() {
+        return estimatedTime != null ? estimatedTime : scheduledTime;
+    }
 }

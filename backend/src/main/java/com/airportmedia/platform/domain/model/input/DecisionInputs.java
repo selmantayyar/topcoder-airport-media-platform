@@ -33,6 +33,12 @@ public record DecisionInputs(
         Instant dayStart,
         Instant dayEnd) {
 
+    /** The same decision context with a different candidate set — used to simulate a draft campaign. */
+    public DecisionInputs withCampaigns(List<CampaignView> candidates) {
+        return new DecisionInputs(screenId, zoneId, screenGates, now, dataAsOf, headcount, profile,
+                nearbyFlights, candidates, lastWinnerKind, lastWinnerAdvertiser, dayStart, dayEnd);
+    }
+
     /** One flight near the screen, as cited by the decision. */
     public record NearbyFlight(
             String flightNumber,

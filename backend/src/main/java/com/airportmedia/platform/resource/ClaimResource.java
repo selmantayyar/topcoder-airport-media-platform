@@ -2,6 +2,7 @@ package com.airportmedia.platform.resource;
 
 import com.airportmedia.platform.domain.model.output.ClaimResult;
 import com.airportmedia.platform.domain.model.output.PromoInfo;
+import com.airportmedia.platform.domain.model.output.PromoIssued;
 import com.airportmedia.platform.service.ClaimService;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
@@ -37,5 +38,11 @@ public class ClaimResource {
     @Path("/{code}/claim")
     public ClaimResult claim(@PathParam("code") String code) {
         return claims.claim(code);
+    }
+
+    @POST
+    @Path("/{code}/share")
+    public PromoIssued share(@PathParam("code") String code) {
+        return claims.share(code);
     }
 }

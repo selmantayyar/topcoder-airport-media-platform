@@ -85,8 +85,9 @@ public class PlaybackService {
             creative = creatives.firstForCampaign(decision.winnerCampaignId())
                     .map(PlaybackService::creativeView)
                     .orElse(null);
-            promo = promoCodes.firstClaimableForCampaign(decision.winnerCampaignId())
-                    .filter(p -> !now.isAfter(p.validUntil))
+            promo = promoCodes.listClaimableForCampaign(decision.winnerCampaignId()).stream()
+                    .filter(p -> now.isBefore(PromoPolicy.effectiveExpiry(p)))
+                    .findFirst()
                     .map(p -> promoPlayback(p, now))
                     .orElse(null);
         }
@@ -108,7 +109,7 @@ public class PlaybackService {
 
     private static FidsEntry fidsEntry(GateAssignment ga, Instant now) {
         Flight f = ga.flight;
-        Instant departure = f.estimatedTime != null ? f.estimatedTime : f.scheduledTime;
+        Instant departure = f.departureTime();
         long minutes = Duration.between(now, departure).toMinutes();
         return new FidsEntry(f.flightNumber, f.airline.name, f.destination, ga.gate,
                 f.scheduledTime, f.estimatedTime, displayStatus(f, minutes), minutes);
@@ -141,8 +142,9 @@ public class PlaybackService {
     }
 
     private static PromoPlayback promoPlayback(PromoCode promo, Instant now) {
-        long secondsRemaining = Math.max(0, Duration.between(now, promo.validUntil).getSeconds());
-        return new PromoPlayback(promo.code, promo.validUntil, secondsRemaining, "/claim/" + promo.code);
+        Instant expiresAt = PromoPolicy.effectiveExpiry(promo);
+        long secondsRemaining = Math.max(0, Duration.between(now, expiresAt).getSeconds());
+        return new PromoPlayback(promo.code, expiresAt, secondsRemaining, promo.claimPath());
     }
 
     private static List<String> gatesOf(Screen s) {

@@ -8,11 +8,47 @@ async function post<T>(path: string): Promise<T> {
   return res.json() as Promise<T>;
 }
 
+/** The backend's shared error shape; `fieldErrors` is set for validation failures. */
+export interface ErrorResponse {
+  status: number;
+  error: string;
+  message: string;
+  fieldErrors: { field: string; message: string }[];
+}
+
+export class ApiError extends Error {
+  readonly body: ErrorResponse;
+
+  constructor(body: ErrorResponse) {
+    super(body.message);
+    this.body = body;
+  }
+}
+
+/** The human-readable reason from any thrown value: first field error, else the server message. */
+export function errorMessage(e: unknown, fallback = 'Something went wrong'): string {
+  if (e instanceof ApiError) return e.body.fieldErrors[0]?.message ?? e.body.message;
+  return fallback;
+}
+
+async function toApiError(res: Response, path: string): Promise<ApiError> {
+  const fallback: ErrorResponse = { status: res.status, error: res.statusText, message: `${path} -> ${res.status}`, fieldErrors: [] };
+  return new ApiError(await res.json().catch(() => fallback));
+}
+
+async function postJson<T>(path: string, body?: unknown): Promise<T> {
+  const res = await fetch(path, {
+    method: 'POST',
+    headers: body === undefined ? undefined : { 'Content-Type': 'application/json' },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+  if (!res.ok) throw await toApiError(res, path);
+  return res.json() as Promise<T>;
+}
+
 async function get<T>(path: string): Promise<T> {
   const res = await fetch(path);
-  if (!res.ok) {
-    throw new Error(`${path} -> ${res.status}`);
-  }
+  if (!res.ok) throw await toApiError(res, path);
   return res.json() as Promise<T>;
 }
 
@@ -184,7 +220,18 @@ export const promo = {
   claim: (code: string) => post<ClaimResult>(`/api/promo/${encodeURIComponent(code)}/claim`),
   scan: (code: string) =>
     fetch(`/api/promo/${encodeURIComponent(code)}/scan`, { method: 'POST' }).catch(() => undefined),
+  share: (code: string) => postJson<PromoIssued>(`/api/promo/${encodeURIComponent(code)}/share`),
 };
+
+export interface PromoIssued {
+  code: string;
+  parentCode: string | null;
+  campaignId: number | null;
+  validUntil: string;
+  expiresAt: string;
+  linkedFlightNumber: string | null;
+  claimPath: string;
+}
 
 // --- Retailer dashboard (ticket 08) -----------------------------------------
 
@@ -243,6 +290,8 @@ export interface OutletSummary {
 
 export const retailers = {
   list: () => get<RetailerSummary[]>('/api/retailers'),
+  campaigns: (id: number) => get<CampaignHistoryRow[]>(`/api/retailers/${id}/campaigns`),
+  creatives: (id: number) => get<CreativeSummary[]>(`/api/retailers/${id}/creatives`),
   outlets: (id: number) => get<OutletSummary[]>(`/api/retailers/${id}/outlets`),
   metrics: (id: number) => get<DashboardMetrics>(`/api/retailers/${id}/metrics`),
   flow: (id: number, outletId?: number | null) =>
@@ -264,4 +313,87 @@ export const lan = {
       localStorage.removeItem(LAN_KEY);
     }
   },
+};
+
+// --- Campaign builder, library, history (ticket 09) -------------------------
+
+export type Haul = 'DOMESTIC' | 'INTERNATIONAL';
+export type SpendTier = 'LOW' | 'MEDIUM' | 'HIGH';
+
+export interface CampaignDraft {
+  advertiserId: number;
+  name: string;
+  creativeId: number | null;
+  headline: string | null;
+  offerText: string | null;
+  body: string | null;
+  language: string | null;
+  gates: string[];
+  zoneIds: number[];
+  screenIds: number[];
+  destinations: string[];
+  haul: Haul | null;
+  minDwellMinutes: number;
+  minDelayMinutes: number;
+  minCrowd: number;
+  weightBusiness: number;
+  weightHoliday: number;
+  weightFamily: number;
+  spendTarget: SpendTier | null;
+  scheduleStart: string;
+  scheduleEnd: string;
+  budget: number;
+  dailyCap: number | null;
+  frequencyCapPerScreen: number;
+}
+
+export interface AudienceMatch {
+  targetedScreens: number;
+  eligibleScreens: number;
+  winningScreens: number;
+  matchPercent: number;
+  expectedImpressionsPerHour: number;
+  expectedRedemptionsPerHour: number;
+}
+
+export interface CampaignHistoryRow {
+  campaignId: number;
+  name: string;
+  status: string;
+  scheduleStart: string;
+  scheduleEnd: string;
+  budget: number;
+  spend: number;
+  impressions: number;
+  redemptions: number;
+  revenue: number;
+  roi: number;
+}
+
+export interface CreativeSummary {
+  id: number;
+  campaignId: number | null;
+  campaignName: string | null;
+  headline: string;
+  offerText: string | null;
+  body: string | null;
+  language: string;
+  templateKey: string;
+}
+
+export interface BuilderOptions {
+  zones: { id: number; name: string; kind: string; terminalCode: string | null }[];
+  destinations: string[];
+  upcomingFlights: { id: number; flightNumber: string; destination: string; gate: string; departure: string }[];
+}
+
+export const campaigns = {
+  options: () => get<BuilderOptions>('/api/campaigns/options'),
+  preview: (draft: CampaignDraft) => postJson<AudienceMatch>('/api/campaigns/preview', draft),
+  create: (draft: CampaignDraft) => postJson<CampaignHistoryRow>('/api/campaigns', draft),
+  /** A past campaign as a pre-filled builder draft (one-click duplicate). */
+  draft: (id: number) => get<CampaignDraft>(`/api/campaigns/${id}/draft`),
+  runAgain: (id: number) => postJson<CampaignHistoryRow>(`/api/campaigns/${id}/run-again`),
+  issuePromo: (id: number, flightId: number | null, validMinutes: number) =>
+    postJson<PromoIssued>(`/api/campaigns/${id}/promo-codes`, { flightId, validMinutes }),
 };

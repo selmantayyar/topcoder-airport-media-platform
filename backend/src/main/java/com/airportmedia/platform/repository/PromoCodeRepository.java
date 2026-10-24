@@ -3,6 +3,7 @@ package com.airportmedia.platform.repository;
 import com.airportmedia.platform.domain.entity.PromoCode;
 import io.quarkus.hibernate.orm.panache.PanacheRepository;
 import jakarta.enterprise.context.ApplicationScoped;
+import java.util.List;
 import java.util.Optional;
 
 @ApplicationScoped
@@ -12,8 +13,8 @@ public class PromoCodeRepository implements PanacheRepository<PromoCode> {
         return find("code", code).firstResultOptional();
     }
 
-    /** The campaign's first still-claimable code — what a passenger screen offers. */
-    public Optional<PromoCode> firstClaimableForCampaign(long campaignId) {
-        return find("campaign.id = ?1 and redeemed = false order by validUntil", campaignId).firstResultOptional();
+    /** A campaign's unredeemed screen codes (family share copies excluded), soonest time box first. */
+    public List<PromoCode> listClaimableForCampaign(long campaignId) {
+        return list("campaign.id = ?1 and redeemed = false and parentCode is null order by validUntil", campaignId);
     }
 }

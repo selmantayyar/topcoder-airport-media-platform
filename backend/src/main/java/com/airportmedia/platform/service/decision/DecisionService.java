@@ -11,6 +11,7 @@ import com.airportmedia.platform.domain.model.input.CampaignView;
 import com.airportmedia.platform.domain.model.input.DecisionInputs;
 import com.airportmedia.platform.domain.model.input.DecisionInputs.NearbyFlight;
 import com.airportmedia.platform.domain.model.output.CandidateScore;
+import com.airportmedia.platform.domain.model.output.AudienceMatch.ScreenOutcome;
 import com.airportmedia.platform.domain.model.output.DecisionResult;
 import com.airportmedia.platform.domain.model.output.ZonePresence;
 import com.airportmedia.platform.repository.CampaignRepository;
@@ -19,6 +20,7 @@ import com.airportmedia.platform.repository.GateAssignmentRepository;
 import com.airportmedia.platform.repository.ImpressionRepository;
 import com.airportmedia.platform.repository.RedemptionRepository;
 import com.airportmedia.platform.repository.ScreenRepository;
+import com.airportmedia.platform.service.RetailEconomics;
 import com.airportmedia.platform.service.SimulationClock;
 import com.airportmedia.platform.service.ZonePresenceService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -36,6 +38,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
@@ -55,6 +58,7 @@ public class DecisionService {
     private final SimulationClock clock;
     private final ZonePresenceService zonePresence;
     private final DecisionPipeline pipeline;
+    private final HardFilters hardFilters;
     private final CampaignTargetingParser targetingParser;
     private final CampaignRepository campaigns;
     private final ScreenRepository screens;
@@ -64,7 +68,7 @@ public class DecisionService {
     private final DecisionLogRepository decisionLogs;
     private final ObjectMapper mapper;
 
-    private final double impressionCost;
+    private final RetailEconomics economics;
     private final int frequencyWindowMinutes;
     private final int intervalSimSeconds;
     private final int screenBatch;
@@ -79,6 +83,7 @@ public class DecisionService {
             SimulationClock clock,
             ZonePresenceService zonePresence,
             DecisionPipeline pipeline,
+            HardFilters hardFilters,
             CampaignTargetingParser targetingParser,
             CampaignRepository campaigns,
             ScreenRepository screens,
@@ -87,13 +92,14 @@ public class DecisionService {
             RedemptionRepository redemptions,
             DecisionLogRepository decisionLogs,
             ObjectMapper mapper,
-            @ConfigProperty(name = "app.decision.impression-cost", defaultValue = "0.5") double impressionCost,
+            RetailEconomics economics,
             @ConfigProperty(name = "app.decision.frequency-window-minutes", defaultValue = "60") int frequencyWindowMinutes,
             @ConfigProperty(name = "app.decision.interval-sim-seconds", defaultValue = "15") int intervalSimSeconds,
             @ConfigProperty(name = "app.decision.screen-batch", defaultValue = "40") int screenBatch) {
         this.clock = clock;
         this.zonePresence = zonePresence;
         this.pipeline = pipeline;
+        this.hardFilters = hardFilters;
         this.targetingParser = targetingParser;
         this.campaigns = campaigns;
         this.screens = screens;
@@ -102,7 +108,7 @@ public class DecisionService {
         this.redemptions = redemptions;
         this.decisionLogs = decisionLogs;
         this.mapper = mapper;
-        this.impressionCost = impressionCost;
+        this.economics = economics;
         this.frequencyWindowMinutes = frequencyWindowMinutes;
         this.intervalSimSeconds = intervalSimSeconds;
         this.screenBatch = screenBatch;
@@ -148,6 +154,42 @@ public class DecisionService {
         return due.size();
     }
 
+    /**
+     * What a not-yet-saved campaign would do if it ran right now: on every online screen, the draft
+     * competes against the live campaigns through the real pipeline (no side effects). Feeds the
+     * builder's audience-match preview, so the estimate uses exactly the logic that will pick it.
+     */
+    @Transactional
+    public List<ScreenOutcome> simulateDraft(CampaignView draft) {
+        Instant now = clock.snapshot().simTime();
+        Shared shared = loadShared(now);
+        List<ScreenOutcome> outcomes = new ArrayList<>();
+        for (Screen screen : screens.listOnline()) {
+            DecisionInputs live = buildInputs(screen, shared, now);
+            List<CampaignView> candidates = new ArrayList<>(live.campaigns());
+            candidates.add(draft);
+            DecisionInputs inputs = live.withCampaigns(candidates);
+
+            DecisionResult result = pipeline.decide(inputs);
+            CandidateScore score = result.candidates().stream()
+                    .filter(c -> c.campaignId() == draft.campaignId())
+                    .findFirst()
+                    .orElse(null);
+            boolean eligible = score != null && score.eligible();
+            outcomes.add(new ScreenOutcome(
+                    hardFilters.firstStaticFailure(draft, inputs) == null,
+                    eligible,
+                    !result.fallback() && Objects.equals(result.winnerCampaignId(), draft.campaignId()),
+                    eligible ? score.crowdFit() : 0.0,
+                    inputs.headcount()));
+        }
+        return outcomes;
+    }
+
+    public int intervalSimSeconds() {
+        return intervalSimSeconds;
+    }
+
     private boolean isDue(long screenId, Instant now) {
         Instant last = lastDecisionAt.get(screenId);
         return last == null || Duration.between(last, now).abs().toSeconds() >= intervalSimSeconds;
@@ -186,7 +228,7 @@ public class DecisionService {
         List<NearbyFlight> out = new ArrayList<>();
         for (GateAssignment ga : shared.departuresByZone().getOrDefault(zoneId, List.of())) {
             Flight f = ga.flight;
-            Instant departure = f.estimatedTime != null ? f.estimatedTime : f.scheduledTime;
+            Instant departure = f.departureTime();
             long minutes = Duration.between(now, departure).toMinutes();
             if (ZonePresenceService.presenceFraction(minutes) <= 0) {
                 continue;
@@ -202,7 +244,7 @@ public class DecisionService {
         long impressionsTotal = shared.impressionTotals().getOrDefault(c.id, 0L);
         long redemptionsTotal = shared.redemptionTotals().getOrDefault(c.id, 0L);
         long windowCount = shared.windowCounts().getOrDefault(screenId, Map.of()).getOrDefault(c.id, 0L);
-        BigDecimal spent = BigDecimal.valueOf(impressionsTotal * impressionCost);
+        BigDecimal spent = economics.spend(impressionsTotal);
         CampaignTargeting targeting = targetingParser.parse(c.placementJson, c.hardFiltersJson, c.segmentWeightsJson);
         return new CampaignView(
                 c.id, c.name, c.advertiser.name, c.advertiser.kind, c.status,

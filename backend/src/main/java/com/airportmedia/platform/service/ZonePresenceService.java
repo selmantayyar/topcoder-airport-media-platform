@@ -96,7 +96,7 @@ public class ZonePresenceService {
             if (flight == null || flight.direction != FlightDirection.DEPARTURE) {
                 continue;
             }
-            Instant departure = flight.estimatedTime != null ? flight.estimatedTime : flight.scheduledTime;
+            Instant departure = flight.departureTime();
             long minutesToDeparture = Duration.between(now, departure).toMinutes();
             int pax = (int) Math.round(flight.paxCount * presenceFraction(minutesToDeparture));
             if (pax <= 0) {

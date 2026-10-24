@@ -10,6 +10,7 @@ import com.airportmedia.platform.domain.entity.Redemption;
 import com.airportmedia.platform.domain.model.output.ClaimResult;
 import com.airportmedia.platform.domain.model.output.CrowdProfile;
 import com.airportmedia.platform.domain.model.output.PromoInfo;
+import com.airportmedia.platform.domain.model.output.PromoIssued;
 import com.airportmedia.platform.domain.model.output.ServerEvent;
 import com.airportmedia.platform.repository.CreativeRepository;
 import com.airportmedia.platform.repository.PromoCodeRepository;
@@ -17,14 +18,16 @@ import com.airportmedia.platform.repository.PromoScanRepository;
 import com.airportmedia.platform.repository.RedemptionRepository;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
+import jakarta.ws.rs.ClientErrorException;
 import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.core.Response;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Map;
 
 /**
- * Records a passenger's QR claim as a {@link Redemption}. Expiry is evaluated against the
- * simulation clock (so jumping the clock past a promo's validity expires it), and a code is
+ * Records a passenger's QR claim as a {@link Redemption}. Expiry follows {@link PromoPolicy} against the
+ * simulation clock (time box, or the linked flight's boarding close if sooner), and a code is
  * single-use: a second claim reports {@code ALREADY_CLAIMED} without recording a duplicate.
  * A successful claim is broadcast on the live stream so dashboards reflect it within seconds.
  */
@@ -38,6 +41,7 @@ public class ClaimService {
     private final SimulationClock clock;
     private final CrowdProfiler profiler;
     private final EventStream stream;
+    private final PromoIssuance issuance;
 
     public ClaimService(
             PromoCodeRepository promoCodes,
@@ -46,7 +50,8 @@ public class ClaimService {
             CreativeRepository creatives,
             SimulationClock clock,
             CrowdProfiler profiler,
-            EventStream stream) {
+            EventStream stream,
+            PromoIssuance issuance) {
         this.promoCodes = promoCodes;
         this.redemptions = redemptions;
         this.scans = scans;
@@ -54,18 +59,20 @@ public class ClaimService {
         this.clock = clock;
         this.profiler = profiler;
         this.stream = stream;
+        this.issuance = issuance;
     }
 
     @Transactional
     public PromoInfo info(String code) {
         PromoCode promo = require(code);
         Instant now = clock.snapshot().simTime();
-        boolean expired = now.isAfter(promo.validUntil);
-        long secondsRemaining = Math.max(0, Duration.between(now, promo.validUntil).getSeconds());
+        Instant expiresAt = PromoPolicy.effectiveExpiry(promo);
+        boolean expired = now.isAfter(expiresAt);
+        long secondsRemaining = Math.max(0, Duration.between(now, expiresAt).getSeconds());
         Creative creative = creativeFor(promo);
         return new PromoInfo(
                 promo.code, promo.campaign.id, promo.campaign.name,
-                headline(promo, creative), offer(promo, creative), promo.validUntil,
+                headline(promo, creative), offer(promo, creative), expiresAt,
                 promo.redeemed, expired, secondsRemaining);
     }
 
@@ -83,12 +90,35 @@ public class ClaimService {
                 "code", promo.code)));
     }
 
+    /**
+     * Issues the one share-to-family copy of a claimed code: same campaign, same time box and flight, its
+     * own single-use code. Only a claimed code can be shared, only once, and a family code never again.
+     */
+    @Transactional
+    public PromoIssued share(String code) {
+        PromoCode parent = require(code);
+        if (parent.parentCode != null) {
+            throw new ClientErrorException("A family code can't be shared again", Response.Status.CONFLICT);
+        }
+        if (!parent.redeemed) {
+            throw new ClientErrorException("Claim the offer before sharing it", Response.Status.CONFLICT);
+        }
+        if (promoCodes.count("parentCode", parent.code) > 0) {
+            throw new ClientErrorException("This code has already been shared", Response.Status.CONFLICT);
+        }
+        if (clock.snapshot().simTime().isAfter(PromoPolicy.effectiveExpiry(parent))) {
+            throw new ClientErrorException("This offer has expired", Response.Status.CONFLICT);
+        }
+
+        return issuance.issue(parent.campaign, parent.validUntil, parent.linkedFlight, parent.code);
+    }
+
     @Transactional
     public ClaimResult claim(String code) {
         PromoCode promo = require(code);
         Instant now = clock.snapshot().simTime();
 
-        if (now.isAfter(promo.validUntil)) {
+        if (now.isAfter(PromoPolicy.effectiveExpiry(promo))) {
             return result(ClaimStatus.EXPIRED, promo, null, "This offer has expired.");
         }
         if (promo.redeemed) {
@@ -120,7 +150,7 @@ public class ClaimService {
     private ClaimResult result(ClaimStatus status, PromoCode promo, String segment, String message) {
         return new ClaimResult(
                 status, promo.code, promo.campaign.id, promo.campaign.name,
-                offer(promo, creativeFor(promo)), promo.validUntil,
+                offer(promo, creativeFor(promo)), PromoPolicy.effectiveExpiry(promo),
                 status == ClaimStatus.CLAIMED ? clock.snapshot().simTime() : null,
                 segment, message);
     }

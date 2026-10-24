@@ -30,8 +30,25 @@ final class DecisionFixtures {
     static CampaignTargeting targeting(
             Set<String> gates, Haul haul, Set<String> destinations, int minCrowd, int minDwell,
             String restricted, SpendTier spend, double wBusiness, double wHoliday, double wFamily) {
-        return new CampaignTargeting(
-                gates, haul, destinations, minCrowd, minDwell, restricted, spend, wBusiness, wHoliday, wFamily);
+        return new CampaignTargeting(gates, Set.of(), Set.of(), haul, destinations, minCrowd, minDwell, 0,
+                restricted, spend, wBusiness, wHoliday, wFamily);
+    }
+
+    static CampaignTargeting placementTargeting(Set<String> gates, Set<Long> zoneIds, Set<Long> screenIds) {
+        return new CampaignTargeting(gates, zoneIds, screenIds, null, Set.of(), 0, 0, 0,
+                null, SpendTier.MEDIUM, 1, 1, 1);
+    }
+
+    static CampaignTargeting delayTargeting(int minDelayMinutes) {
+        return new CampaignTargeting(Set.of("42"), Set.of(), Set.of(), null, Set.of(), 0, 0, minDelayMinutes,
+                null, SpendTier.MEDIUM, 1, 1, 1);
+    }
+
+    /** The default fixture profile with its flights delayed by {@code delayMinutes}. */
+    static CrowdProfile delayedProfile(int delayMinutes) {
+        CrowdProfile p = profile(400, 20, 55, 25, 30, 45, 30, 25, 130);
+        return new CrowdProfile(p.crowdSize(), p.tripPurpose(), p.partyType(), p.ageBand(), p.femalePct(),
+                p.spendTier(), p.language(), p.region(), p.dwellMinutes(), delayMinutes > 0, delayMinutes);
     }
 
     static CampaignTargeting defaultTargeting() {

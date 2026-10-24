@@ -11,6 +11,7 @@ import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.WebApplicationException;
 import java.time.Instant;
 import org.junit.jupiter.api.Test;
 
@@ -103,5 +104,44 @@ class ClaimServiceTest {
         assertThat(info.redeemed()).isFalse();
         assertThat(info.secondsRemaining()).isPositive();
         assertThat(info.offerText()).isNotBlank();
+    }
+
+    @Test
+    void aLinkedCodeExpiresWhenItsFlightsBoardingCloses() {
+        // XY501 departs 14:55 after its delay, so boarding — and the linked code — closes at 14:40.
+        clock.jumpTo(Instant.parse("2026-10-23T14:45:00Z"));
+
+        assertThat(claims.info(PROMO).expired()).isTrue();
+        assertThat(claims.claim(PROMO).status()).isEqualTo(ClaimStatus.EXPIRED);
+    }
+
+    @Test
+    void sharingCreatesOneFamilyCodeLinkedToTheParent() {
+        clock.jumpTo(DURING);
+        claims.claim(PROMO);
+
+        var child = claims.share(PROMO);
+
+        assertThat(child.code()).isNotEqualTo(PROMO);
+        assertThat(child.parentCode()).isEqualTo(PROMO);
+        assertThat(claims.claim(child.code()).status()).isEqualTo(ClaimStatus.CLAIMED);
+    }
+
+    @Test
+    void aCodeCanOnlyBeSharedOnceAndAFamilyCodeCannotBeReshared() {
+        clock.jumpTo(DURING);
+        claims.claim(PROMO);
+        var child = claims.share(PROMO);
+        claims.claim(child.code());
+
+        assertThatThrownBy(() -> claims.share(PROMO)).isInstanceOf(WebApplicationException.class);
+        assertThatThrownBy(() -> claims.share(child.code())).isInstanceOf(WebApplicationException.class);
+    }
+
+    @Test
+    void anUnclaimedCodeCannotMintAFamilyCode() {
+        clock.jumpTo(DURING);
+
+        assertThatThrownBy(() -> claims.share(PROMO)).isInstanceOf(WebApplicationException.class);
     }
 }

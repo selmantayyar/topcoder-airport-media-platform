@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { promo, type ClaimResult, type PromoInfo } from '../server/api';
+import { QRCodeSVG } from 'qrcode.react';
+import { errorMessage, promo, type ClaimResult, type PromoInfo, type PromoIssued } from '../server/api';
 
 /**
  * The LAN-served mobile page a passenger reaches by scanning the promo QR. It shows the offer and
@@ -58,6 +59,7 @@ export function ClaimPage() {
           <strong>{outcomeTitle(done.status)}</strong>
           <p>{done.message}</p>
           <span className="claim__code">{info.code}</span>
+          {done.status === 'CLAIMED' && code && <ShareWithFamily code={code} />}
         </div>
       ) : info.expired ? (
         <div className="claim__outcome claim__outcome--expired">
@@ -75,6 +77,41 @@ export function ClaimPage() {
         </>
       )}
     </ClaimShell>
+  );
+}
+
+/** One extra code a passenger can hand to a travelling companion — same offer, its own single use. */
+function ShareWithFamily({ code }: { code: string }) {
+  const [shared, setShared] = useState<PromoIssued | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  if (shared) {
+    const link = `${window.location.origin}${shared.claimPath}`;
+    return (
+      <div className="claim__share">
+        <p>Family code — let them scan this:</p>
+        <QRCodeSVG value={link} size={160} includeMargin />
+        <span className="claim__code">{shared.code}</span>
+        <a href={link}>{link}</a>
+      </div>
+    );
+  }
+  return (
+    <div className="claim__share">
+      <button
+        type="button"
+        className="claim__btn claim__btn--secondary"
+        onClick={() =>
+          promo
+            .share(code)
+            .then(setShared)
+            .catch((e: unknown) => setError(errorMessage(e, 'Could not share this offer.')))
+        }
+      >
+        Share with a family member
+      </button>
+      {error && <p className="claim__msg claim__msg--bad">{error}</p>}
+    </div>
   );
 }
 

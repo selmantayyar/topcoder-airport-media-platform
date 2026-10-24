@@ -50,7 +50,7 @@ export function WhyThisAd({ decision, onClose }: { decision: DecisionResult; onC
             <tbody>
               {ranked.map((c) => (
                 <tr key={c.campaignId} className={c.campaignId === decision.winnerCampaignId ? 'is-winner' : ''}>
-                  <td>{c.advertiserName}</td>
+                  <td title={c.campaignName}>{c.campaignName}</td>
                   <td>{fmt(c.crowdFit)}</td>
                   <td>{fmt(c.boardingProximity)}</td>
                   <td>{fmt(c.dwellFit)}</td>

@@ -35,7 +35,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 /**
  * Powers the retailer dashboard: a company's live impression → scan → redemption funnel with
@@ -55,7 +54,7 @@ public class RetailerDashboardService {
     private final GateAssignmentRepository gateAssignments;
     private final RouteDirectory routes;
     private final SimulationClock clock;
-    private final double averageBasket;
+    private final RetailEconomics economics;
 
     public RetailerDashboardService(
             AdvertiserRepository advertisers,
@@ -67,7 +66,7 @@ public class RetailerDashboardService {
             GateAssignmentRepository gateAssignments,
             RouteDirectory routes,
             SimulationClock clock,
-            @ConfigProperty(name = "app.retail.avg-basket", defaultValue = "45.0") double averageBasket) {
+            RetailEconomics economics) {
         this.advertisers = advertisers;
         this.outlets = outlets;
         this.campaigns = campaigns;
@@ -77,7 +76,7 @@ public class RetailerDashboardService {
         this.gateAssignments = gateAssignments;
         this.routes = routes;
         this.clock = clock;
-        this.averageBasket = averageBasket;
+        this.economics = economics;
     }
 
     @Transactional
@@ -111,7 +110,7 @@ public class RetailerDashboardService {
                 advertiser.id, advertiser.name,
                 totalImpressions, totalScans, totalRedemptions,
                 conversionRate(totalRedemptions, totalImpressions),
-                revenue(totalRedemptions),
+                economics.revenue(totalRedemptions),
                 rows);
     }
 
@@ -172,14 +171,7 @@ public class RetailerDashboardService {
                 imp.getOrDefault(c.id, 0L),
                 scan.getOrDefault(c.id, 0L),
                 redemptionCount,
-                revenue(redemptionCount));
-    }
-
-    /** Attributed revenue = redemptions × average basket ({@code app.retail.avg-basket}), to the cent. */
-    private BigDecimal revenue(long redemptionCount) {
-        return BigDecimal.valueOf(redemptionCount)
-                .multiply(BigDecimal.valueOf(averageBasket))
-                .setScale(2, RoundingMode.HALF_UP);
+                economics.revenue(redemptionCount));
     }
 
     /** Conversion = redemptions ÷ impressions, as a 0..1 fraction to 4 places (0 when nothing has played). */
@@ -199,7 +191,7 @@ public class RetailerDashboardService {
 
         for (GateAssignment ga : departures) {
             Flight f = ga.flight;
-            Instant departure = f.estimatedTime != null ? f.estimatedTime : f.scheduledTime;
+            Instant departure = f.departureTime();
             long mins = Duration.between(now, departure).toMinutes();
             if (mins < 0 || mins > minutes) {
                 continue;

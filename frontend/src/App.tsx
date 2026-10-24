@@ -3,7 +3,7 @@ import { AppHeader } from './components/AppHeader';
 import { SimControlBar } from './components/SimControlBar';
 import { PresencePanel } from './components/PresencePanel';
 import { ScreenChooser } from './components/ScreenChooser';
-import { RetailerDashboard } from './components/RetailerDashboard';
+import { RetailerWorkspace } from './components/RetailerWorkspace';
 import { ServerStreamProvider } from './server/stream';
 import { DEFAULT_ROLE, labelForRole, themeForRole, type RoleId } from './roles';
 import './App.css';
@@ -26,7 +26,7 @@ export default function App() {
           {role === 'passenger' ? (
             <ScreenChooser />
           ) : role === 'retailer' ? (
-            <RetailerDashboard />
+            <RetailerWorkspace />
           ) : (
             <>
               <section className="placeholder-panel placeholder-panel--slim">

@@ -10,10 +10,10 @@ import jakarta.enterprise.context.ApplicationScoped;
 
 /**
  * The hard-filter stage: a campaign that fails any one of these is categorically ineligible and
- * never scored. Filters split into <em>static</em> ones (approval, schedule, placement, budget —
- * trustworthy regardless of live data) and <em>dynamic</em> ones (haul, destination, brand-safety,
- * crowd, dwell — derived from flight/crowd data). The split lets the rule-based fallback reuse only
- * the static filters when the dynamic inputs can't be trusted.
+ * never scored. Filters split into <em>static</em> ones (approval, schedule, placement by gate/zone/
+ * screen, budget — trustworthy regardless of live data) and <em>dynamic</em> ones (haul, destination,
+ * brand-safety, crowd, dwell, delay — derived from flight/crowd data). The split lets the rule-based
+ * fallback reuse only the static filters when the dynamic inputs can't be trusted.
  */
 @ApplicationScoped
 public class HardFilters {
@@ -49,6 +49,12 @@ public class HardFilters {
         if (profile != null && t.minDwellMinutes() > 0 && profile.dwellMinutes() < t.minDwellMinutes()) {
             return "below minimum dwell (" + profile.dwellMinutes() + " < " + t.minDwellMinutes() + "m)";
         }
+        if (t.minDelayMinutes() > 0) {
+            int delay = profile != null ? profile.delayMinutes() : 0;
+            if (delay < t.minDelayMinutes()) {
+                return "crowd not delayed enough (" + delay + " < " + t.minDelayMinutes() + "m)";
+            }
+        }
         return null;
     }
 
@@ -61,7 +67,7 @@ public class HardFilters {
             return "outside schedule window";
         }
         CampaignTargeting t = campaign.targeting();
-        if (!t.gates().isEmpty() && inputs.screenGates().stream().noneMatch(t.gates()::contains)) {
+        if (!t.placementUnrestricted() && !placementMatches(t, inputs)) {
             return "no placement at this screen";
         }
         if (campaign.budget() != null && campaign.spentToDate() != null
@@ -69,5 +75,12 @@ public class HardFilters {
             return "budget exhausted";
         }
         return null;
+    }
+
+    /** A screen is placed if it sits near a named gate, in a named zone, or is itself a named screen. */
+    private static boolean placementMatches(CampaignTargeting t, DecisionInputs inputs) {
+        return inputs.screenGates().stream().anyMatch(t.gates()::contains)
+                || (inputs.zoneId() != null && t.zoneIds().contains(inputs.zoneId()))
+                || t.screenIds().contains(inputs.screenId());
     }
 }
