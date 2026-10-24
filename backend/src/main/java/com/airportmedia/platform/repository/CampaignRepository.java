@@ -27,6 +27,11 @@ public class CampaignRepository implements PanacheRepository<Campaign> {
         return list("scheduleStart <= ?1 and scheduleEnd >= ?1", now);
     }
 
+    /** Every campaign whose schedule overlaps [from, to), whatever its status (pipeline filters decide). */
+    public List<Campaign> listScheduledBetween(Instant from, Instant to) {
+        return list("scheduleStart < ?2 and scheduleEnd >= ?1", from, to);
+    }
+
     /** RUNNING campaigns whose schedule covers {@code now} — what the pipeline can actually play. */
     public long countActiveAt(Instant now) {
         return count("status = ?1 and scheduleStart <= ?2 and scheduleEnd >= ?2", CampaignStatus.RUNNING, now);

@@ -6,7 +6,9 @@ import com.airportmedia.platform.domain.model.output.AudienceMatch;
 import com.airportmedia.platform.domain.model.output.BuilderOptions;
 import com.airportmedia.platform.domain.model.output.CampaignHistoryRow;
 import com.airportmedia.platform.domain.model.output.PromoIssued;
+import com.airportmedia.platform.domain.model.output.SlotRecommendations;
 import com.airportmedia.platform.service.CampaignService;
+import com.airportmedia.platform.service.decision.SlotRecommendationService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.Consumes;
@@ -17,15 +19,20 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 
-/** The retailer campaign builder: options, live audience-match preview, save, duplicate-as-draft, re-run, promo codes. */
+/**
+ * The retailer campaign builder: options, live audience-match preview, save, duplicate-as-draft, re-run, promo
+ * codes, and the smart "best slots tomorrow" recommendation.
+ */
 @Path("/api/campaigns")
 @Produces(MediaType.APPLICATION_JSON)
 public class CampaignResource {
 
     private final CampaignService campaigns;
+    private final SlotRecommendationService slots;
 
-    public CampaignResource(CampaignService campaigns) {
+    public CampaignResource(CampaignService campaigns, SlotRecommendationService slots) {
         this.campaigns = campaigns;
+        this.slots = slots;
     }
 
     @GET
@@ -64,5 +71,12 @@ public class CampaignResource {
     @Path("/{id}/promo-codes")
     public PromoIssued issuePromo(@PathParam("id") long id, @Valid PromoRequest request) {
         return campaigns.issuePromo(id, request != null ? request : new PromoRequest(null, null));
+    }
+
+    /** The best 3 zone-hours for this campaign tomorrow, with predicted impressions. */
+    @GET
+    @Path("/{id}/recommended-slots")
+    public SlotRecommendations recommendedSlots(@PathParam("id") long id) {
+        return slots.recommend(id);
     }
 }

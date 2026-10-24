@@ -473,6 +473,33 @@
 .library__offer { color: var(--accent); font-size: 13px; }
 .library__meta { color: var(--text-muted); font-size: 11px; margin-bottom: 6px; }
 
+/* GenAI creative assistant + smart slot recommendation (ticket 13) */
+.assistant { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; padding-bottom: 16px;
+  border-bottom: 1px solid var(--border); }
+.assistant__brief { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; }
+.assistant__brief label { flex: 1; min-width: 220px; display: flex; flex-direction: column; gap: 4px; font-size: 12px;
+  color: var(--text-muted); }
+.assistant__brief input { font: inherit; font-size: 14px; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border);
+  background: var(--bg); color: var(--text); }
+.assistant__go { font: inherit; font-weight: 700; font-size: 13px; padding: 9px 14px; border: 0; border-radius: 8px;
+  background: var(--accent); color: #fff; cursor: pointer; }
+.assistant__go:disabled { opacity: .6; }
+.assistant__note { color: var(--warn); }
+.assistant__pages { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+.assistant__page { display: flex; flex-direction: column; gap: 6px; }
+.assistant__page button { align-self: flex-start; font: inherit; font-size: 12px; padding: 5px 10px; border-radius: 6px;
+  border: 1px solid var(--border); background: transparent; color: var(--text); cursor: pointer; }
+.assistant__page button:hover { border-color: var(--accent); }
+.slots { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); }
+.slots h4 { margin: 0 0 8px; font-size: 14px; }
+.slots__list { list-style: none; margin: 0 0 8px; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.slots__item { display: grid; grid-template-columns: auto 1fr auto; gap: 2px 12px; align-items: baseline; padding: 8px 12px;
+  border: 1px solid var(--border); border-radius: 8px; font-size: 13px; }
+.slots__rank { font-weight: 700; color: var(--accent); grid-row: span 2; }
+.slots__impr { font-weight: 600; font-variant-numeric: tabular-nums; }
+.slots__meta { grid-column: 2 / 4; color: var(--text-muted); font-size: 12px; }
+@media (max-width: 600px) { .slots__item { grid-template-columns: auto 1fr; } .slots__impr { grid-column: 2; } }
+
 /* ---- Platform Admin console (ticket 10) ---- */
 .console { display: flex; flex-direction: column; gap: 16px; }
 .console__loading { color: var(--text-muted); }

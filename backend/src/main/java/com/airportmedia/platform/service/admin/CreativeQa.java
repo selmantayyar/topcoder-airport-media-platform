@@ -1,5 +1,6 @@
 package com.airportmedia.platform.service.admin;
 
+import com.airportmedia.platform.domain.model.validation.ScreenCopyLimits;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -10,9 +11,9 @@ import java.util.Set;
  */
 public final class CreativeQa {
 
-    static final int MAX_HEADLINE = 60;
-    static final int MAX_OFFER = 80;
-    static final int MAX_BODY = 280;
+    static final int MAX_HEADLINE = ScreenCopyLimits.MAX_HEADLINE;
+    static final int MAX_OFFER = ScreenCopyLimits.MAX_OFFER;
+    static final int MAX_BODY = ScreenCopyLimits.MAX_BODY;
     static final Set<String> RENDERABLE_LANGUAGES = Set.of("en", "ar", "es");
 
     private CreativeQa() {}

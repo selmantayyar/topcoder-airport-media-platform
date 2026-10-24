@@ -21,6 +21,11 @@ services:
       QUARKUS_DATASOURCE_USERNAME: airport
       QUARKUS_DATASOURCE_PASSWORD: airport
       QUARKUS_DATASOURCE_JDBC_URL: jdbc:postgresql://db:5432/airport
+      # Creative assistant: mock (offline, default) or llm. For llm, any OpenAI-compatible endpoint.
+      APP_CREATIVE_ASSISTANT_PROVIDER: ${APP_CREATIVE_ASSISTANT_PROVIDER:-mock}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-}
+      OPENAI_MODEL: ${OPENAI_MODEL:-}
     depends_on:
       db:
         condition: service_healthy

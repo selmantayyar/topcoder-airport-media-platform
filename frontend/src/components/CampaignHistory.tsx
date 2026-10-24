@@ -8,7 +8,9 @@ import {
   type CampaignHistoryRow,
   type CreativeSummary,
   type PromoIssued,
+  type SlotRecommendations,
 } from '../server/api';
+import { CreativeAssistant } from './CreativeAssistant';
 import { day, hhmm, money } from '../format';
 
 interface Props {
@@ -30,6 +32,7 @@ export function CampaignHistory({ advertiserId, onUseCreative, onDuplicate, refr
   const [library, setLibrary] = useState<CreativeSummary[]>([]);
   const [options, setOptions] = useState<BuilderOptions | null>(null);
   const [promoFor, setPromoFor] = useState<number | null>(null);
+  const [slotsFor, setSlotsFor] = useState<number | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
   const load = useCallback(() => {
@@ -84,6 +87,9 @@ export function CampaignHistory({ advertiserId, onUseCreative, onDuplicate, refr
                   <button type="button" onClick={() => setPromoFor(promoFor === r.campaignId ? null : r.campaignId)}>
                     Promo code
                   </button>
+                  <button type="button" onClick={() => setSlotsFor(slotsFor === r.campaignId ? null : r.campaignId)}>
+                    Best slots tomorrow
+                  </button>
                 </td>
               </tr>
             ))}
@@ -91,10 +97,12 @@ export function CampaignHistory({ advertiserId, onUseCreative, onDuplicate, refr
           </tbody>
         </table>
         {promoFor != null && <PromoIssuer campaignId={promoFor} options={options} />}
+        {slotsFor != null && <SlotAdvisor key={slotsFor} campaignId={slotsFor} />}
       </div>
 
       <div className="retail__panel">
         <h3>Creative library</h3>
+        <CreativeAssistant advertiserId={advertiserId} onGenerated={load} onUseCreative={onUseCreative} />
         <div className="library">
           {library.map((c) => (
             <div key={c.id} className="library__card">
@@ -107,6 +115,44 @@ export function CampaignHistory({ advertiserId, onUseCreative, onDuplicate, refr
           {library.length === 0 && <p className="retail__empty">No creatives yet — build a campaign to add one.</p>}
         </div>
       </div>
+    </div>
+  );
+}
+
+/** "Best 3 slots for this campaign tomorrow", predicted by replaying tomorrow through the decision pipeline. */
+function SlotAdvisor({ campaignId }: { campaignId: number }) {
+  const [result, setResult] = useState<SlotRecommendations | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    campaigns
+      .recommendedSlots(campaignId)
+      .then(setResult)
+      .catch((e: unknown) => setError(errorMessage(e, 'Could not compute recommendations')));
+  }, [campaignId]);
+
+  if (error) return <p className="field-error">{error}</p>;
+  if (!result) return <p className="builder__hint slots">Simulating tomorrow…</p>;
+  return (
+    <div className="slots">
+      <h4>Best slots for “{result.campaignName}” on {day(result.day)}</h4>
+      {result.slots.length === 0 ? (
+        <p className="retail__empty">This campaign’s targeting fits no screen tomorrow.</p>
+      ) : (
+        <ol className="slots__list">
+          {result.slots.map((s) => (
+            <li key={`${s.zoneId}-${s.start}`} className="slots__item">
+              <span className="slots__rank">#{s.rank}</span>
+              <span className="slots__when">{hhmm(s.start)}–{hhmm(s.end)} UTC · <strong>{s.zoneName}</strong></span>
+              <span className="slots__impr">{s.predictedImpressions.toLocaleString()} predicted impressions</span>
+              <span className="slots__meta">
+                {s.winningScreens} screens · crowd up to {s.peakHeadcount.toLocaleString()} · avg score {s.averageScore.toFixed(1)}
+              </span>
+            </li>
+          ))}
+        </ol>
+      )}
+      <p className="builder__hint">{result.method}</p>
     </div>
   );
 }

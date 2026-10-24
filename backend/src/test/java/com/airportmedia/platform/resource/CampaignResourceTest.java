@@ -42,4 +42,16 @@ class CampaignResourceTest {
                 .body("status", equalTo(404))
                 .body("error", equalTo("Not Found"));
     }
+
+    @Test
+    void recommendedSlotsAndTheCreativeAssistantAreRoutedAndValidated() {
+        given().when().get("/api/campaigns/999999/recommended-slots")
+                .then().statusCode(404)
+                .body("status", equalTo(404));
+
+        given().contentType(ContentType.JSON).body("{\"brief\": \"  \"}")
+                .when().post("/api/retailers/1/creatives/assistant")
+                .then().statusCode(400)
+                .body("fieldErrors.field", hasItems("brief"));
+    }
 }

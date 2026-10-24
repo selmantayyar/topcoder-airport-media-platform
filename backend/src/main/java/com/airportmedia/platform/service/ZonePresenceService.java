@@ -38,7 +38,7 @@ import java.util.function.Function;
 @ApplicationScoped
 public class ZonePresenceService {
 
-    static final int WINDOW_MINUTES = 5;
+    public static final int WINDOW_MINUTES = 5;
 
     private final ZoneRepository zones;
     private final GateAssignmentRepository gateAssignments;

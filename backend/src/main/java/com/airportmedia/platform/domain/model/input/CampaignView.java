@@ -30,4 +30,12 @@ public record CampaignView(
         int impressionsOnScreenInWindow,
         long impressionsTotal,
         long redemptionsTotal,
-        CampaignTargeting targeting) {}
+        CampaignTargeting targeting) {
+
+    /** This campaign as if approved and scheduled for [start, end], with the given plays in the cap window. */
+    public CampaignView runningBetween(Instant start, Instant end, int playsInWindow) {
+        return new CampaignView(campaignId, campaignName, advertiserName, advertiserKind, CampaignStatus.RUNNING,
+                start, end, budget, dailyCap, spentToDate, frequencyCapPerScreen, playsInWindow,
+                impressionsTotal, redemptionsTotal, targeting);
+    }
+}

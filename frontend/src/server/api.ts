@@ -298,6 +298,9 @@ export const retailers = {
   creatives: (id: number) => get<CreativeSummary[]>(`/api/retailers/${id}/creatives`),
   outlets: (id: number) => get<OutletSummary[]>(`/api/retailers/${id}/outlets`),
   metrics: (id: number) => get<DashboardMetrics>(`/api/retailers/${id}/metrics`),
+  /** Brief in, ad page out: English + Spanish pages saved to the library (ticket 13). */
+  generateCreative: (id: number, brief: string) =>
+    postJson<GeneratedCreative>(`/api/retailers/${id}/creatives/assistant`, { brief }),
   flow: (id: number, outletId?: number | null) =>
     get<PassengerFlow>(`/api/retailers/${id}/flow${outletId ? `?outletId=${outletId}` : ''}`),
 };
@@ -385,6 +388,44 @@ export interface CreativeSummary {
   templateKey: string;
 }
 
+export interface AdPage {
+  creativeId: number;
+  language: string;
+  templateKey: string;
+  headline: string;
+  offerText: string | null;
+  body: string | null;
+}
+
+export interface GeneratedCreative {
+  brief: string;
+  /** Which assistant wrote the saved copy: "mock" (offline) or "llm". */
+  provider: string;
+  pages: AdPage[];
+  /** Why any copy was rejected on the way, e.g. LLM copy citing a fact not in the brief. */
+  notes: string[];
+}
+
+export interface SlotRecommendation {
+  rank: number;
+  zoneId: number;
+  zoneName: string;
+  start: string;
+  end: string;
+  predictedImpressions: number;
+  winningScreens: number;
+  peakHeadcount: number;
+  averageScore: number;
+}
+
+export interface SlotRecommendations {
+  campaignId: number;
+  campaignName: string;
+  day: string;
+  slots: SlotRecommendation[];
+  method: string;
+}
+
 export interface BuilderOptions {
   zones: { id: number; name: string; kind: string; terminalCode: string | null }[];
   destinations: string[];
@@ -400,6 +441,8 @@ export const campaigns = {
   runAgain: (id: number) => postJson<CampaignHistoryRow>(`/api/campaigns/${id}/run-again`),
   issuePromo: (id: number, flightId: number | null, validMinutes: number) =>
     postJson<PromoIssued>(`/api/campaigns/${id}/promo-codes`, { flightId, validMinutes }),
+  /** The best 3 zone-hours for this campaign tomorrow, from the decision pipeline (ticket 13). */
+  recommendedSlots: (id: number) => get<SlotRecommendations>(`/api/campaigns/${id}/recommended-slots`),
 };
 
 // --- Platform Admin console (ticket 10) --------------------------------------

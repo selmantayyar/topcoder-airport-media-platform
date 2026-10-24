@@ -6,6 +6,7 @@ import com.airportmedia.platform.domain.entity.Flight;
 import com.airportmedia.platform.domain.entity.GateAssignment;
 import com.airportmedia.platform.domain.entity.Impression;
 import com.airportmedia.platform.domain.entity.Screen;
+import com.airportmedia.platform.domain.entity.Zone;
 import com.airportmedia.platform.domain.model.input.CampaignTargeting;
 import com.airportmedia.platform.domain.model.input.CampaignView;
 import com.airportmedia.platform.domain.model.input.DecisionInputs;
@@ -13,6 +14,7 @@ import com.airportmedia.platform.domain.model.input.DecisionInputs.NearbyFlight;
 import com.airportmedia.platform.domain.model.output.CandidateScore;
 import com.airportmedia.platform.domain.model.output.AudienceMatch.ScreenOutcome;
 import com.airportmedia.platform.domain.model.output.DecisionResult;
+import com.airportmedia.platform.domain.model.output.SlotSample;
 import com.airportmedia.platform.domain.model.output.ZonePresence;
 import com.airportmedia.platform.repository.CampaignRepository;
 import com.airportmedia.platform.repository.DecisionLogRepository;
@@ -185,6 +187,78 @@ public class DecisionService {
         return outcomes;
     }
 
+    /**
+     * A whole projected day for one campaign, replayed through the real pipeline. Every {@code sampleMinutes}
+     * from {@code dayStart}, on every online screen with a zone, one {@link DecisionInputs} is built and
+     * decided, with these inputs fixed for a day that hasn't happened yet:
+     *
+     * <ul>
+     *   <li>crowd = ZonePresence over the given (projected) departures; checkpoint queues = 0 (unknown);</li>
+     *   <li>candidates = the campaign as if approved and scheduled all day ({@link CampaignView#runningBetween}),
+     *       plus every campaign scheduled that day with its real status and no plays in its cap window;</li>
+     *   <li>the campaign's own cap window = its simulated plays on that screen ({@link ScreenPlayLedger});</li>
+     *   <li>no recent winner (competitor separation off); dataAsOf = the sample instant (trusted).</li>
+     * </ul>
+     *
+     * Each sample stands for {@code sampleMinutes × 60 / intervalSimSeconds} decision slots; when the campaign
+     * wins (not via fallback) it is granted {@code min(those slots, cap − plays in window)} plays. No side effects.
+     */
+    @Transactional
+    public List<SlotSample> simulateDay(
+            Campaign subject, List<GateAssignment> departures, Instant dayStart, int sampleMinutes) {
+        Instant dayEnd = dayStart.plus(Duration.ofDays(1));
+        long playsPerSample = Math.round(sampleMinutes * 60.0 / intervalSimSeconds);
+        Map<Long, Long> impressionTotals = impressions.countsByCampaign();
+        Map<Long, Long> redemptionTotals = redemptions.countsByCampaign();
+        CampaignView campaign = view(subject, impressionTotals, redemptionTotals, 0);
+
+        List<CampaignView> rivals = campaigns.listScheduledBetween(dayStart, dayEnd).stream()
+                .filter(c -> c.id != campaign.campaignId())
+                .map(c -> view(c, impressionTotals, redemptionTotals, 0))
+                .toList();
+
+        Map<Long, List<GateAssignment>> departuresByZone = new HashMap<>();
+        for (GateAssignment ga : departures) {
+            if (ga.zone != null) {
+                departuresByZone.computeIfAbsent(ga.zone.id, k -> new ArrayList<>()).add(ga);
+            }
+        }
+        List<Screen> online = screens.listOnline().stream().filter(s -> s.zone != null).toList();
+        Map<Long, Zone> zones = online.stream()
+                .collect(Collectors.toMap(s -> s.zone.id, s -> s.zone, (a, b) -> a));
+        Map<Long, ScreenPlayLedger> ledgers = new HashMap<>();
+
+        List<SlotSample> samples = new ArrayList<>();
+        for (Instant t = dayStart; t.isBefore(dayEnd); t = t.plus(Duration.ofMinutes(sampleMinutes))) {
+            Map<Long, ZonePresence> presence = new HashMap<>();
+            for (Zone zone : zones.values()) {
+                presence.put(zone.id, zonePresence.compute(zone, departuresByZone.getOrDefault(zone.id, List.of()),
+                        0, t, ZonePresenceService.WINDOW_MINUTES));
+            }
+            for (Screen screen : online) {
+                ScreenPlayLedger ledger = ledgers.computeIfAbsent(
+                        screen.id, id -> new ScreenPlayLedger(frequencyWindowMinutes));
+                List<CampaignView> candidates = new ArrayList<>(rivals);
+                candidates.add(0, campaign.runningBetween(dayStart, dayEnd, ledger.inWindow(t)));
+
+                ZonePresence zp = presence.get(screen.zone.id);
+                DecisionResult result = pipeline.decide(new DecisionInputs(
+                        screen.id, screen.zone.id, screen.gates(), t, t, zp.estimatedHeadcount(), zp.profile(),
+                        nearbyFlights(screen.zone.id, departuresByZone, t), candidates,
+                        null, null, dayStart, dayEnd));
+                CandidateScore score = result.candidates().stream()
+                        .filter(c -> c.campaignId() == campaign.campaignId())
+                        .findFirst()
+                        .orElseThrow();
+                boolean won = !result.fallback() && Objects.equals(result.winnerCampaignId(), campaign.campaignId());
+                long plays = won ? ledger.play(t, playsPerSample, campaign.frequencyCapPerScreen()) : 0;
+                samples.add(new SlotSample(screen.zone.id, screen.zone.name, screen.id, t,
+                        zp.estimatedHeadcount(), score.eligible(), plays, score.finalScore()));
+            }
+        }
+        return samples;
+    }
+
     public int intervalSimSeconds() {
         return intervalSimSeconds;
     }
@@ -205,7 +279,7 @@ public class DecisionService {
         ZonePresence presence = zoneId != null ? shared.presenceByZone().get(zoneId) : null;
         int headcount = presence != null ? presence.estimatedHeadcount() : 0;
 
-        List<NearbyFlight> nearby = nearbyFlights(zoneId, shared, now);
+        List<NearbyFlight> nearby = nearbyFlights(zoneId, shared.departuresByZone(), now);
         List<CampaignView> views = shared.campaigns().stream()
                 .map(c -> view(c, screen.id, shared))
                 .toList();
@@ -220,12 +294,13 @@ public class DecisionService {
                 shared.dayStart(), shared.dayEnd());
     }
 
-    private List<NearbyFlight> nearbyFlights(Long zoneId, Shared shared, Instant now) {
+    private static List<NearbyFlight> nearbyFlights(
+            Long zoneId, Map<Long, List<GateAssignment>> departuresByZone, Instant now) {
         if (zoneId == null) {
             return List.of();
         }
         List<NearbyFlight> out = new ArrayList<>();
-        for (GateAssignment ga : shared.departuresByZone().getOrDefault(zoneId, List.of())) {
+        for (GateAssignment ga : departuresByZone.getOrDefault(zoneId, List.of())) {
             Flight f = ga.flight;
             Instant departure = f.departureTime();
             long minutes = Duration.between(now, departure).toMinutes();
@@ -240,9 +315,15 @@ public class DecisionService {
     }
 
     private CampaignView view(Campaign c, long screenId, Shared shared) {
-        long impressionsTotal = shared.impressionTotals().getOrDefault(c.id, 0L);
-        long redemptionsTotal = shared.redemptionTotals().getOrDefault(c.id, 0L);
         long windowCount = shared.windowCounts().getOrDefault(screenId, Map.of()).getOrDefault(c.id, 0L);
+        return view(c, shared.impressionTotals(), shared.redemptionTotals(), windowCount);
+    }
+
+    /** A campaign as a pipeline candidate, from its row and the given play/redemption counters. */
+    private CampaignView view(
+            Campaign c, Map<Long, Long> impressionTotals, Map<Long, Long> redemptionTotals, long windowCount) {
+        long impressionsTotal = impressionTotals.getOrDefault(c.id, 0L);
+        long redemptionsTotal = redemptionTotals.getOrDefault(c.id, 0L);
         BigDecimal spent = economics.spend(impressionsTotal);
         CampaignTargeting targeting = targetingParser.parse(c.placementJson, c.hardFiltersJson, c.segmentWeightsJson);
         return new CampaignView(
