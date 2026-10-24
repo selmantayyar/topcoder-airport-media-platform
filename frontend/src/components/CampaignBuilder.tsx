@@ -30,7 +30,8 @@ const DAY_MS = 86_400_000;
 /**
  * The campaign builder: creative, placement (zones/screens/gates), audience rules, scoring preferences,
  * schedule and budget — with a live audience-match preview computed by the real decision pipeline and a
- * mock-screen render of the ad. Saving makes the campaign RUNNING; the pipeline picks it up next tick.
+ * mock-screen render of the ad. Saving submits it to the Media Manager's approval queue; once approved,
+ * the pipeline picks it up on its next tick.
  */
 export function CampaignBuilder({ advertiserId, libraryCreative, initialDraft, onClearCreative, onSaved }: Props) {
   const { clock } = useClock();
@@ -209,7 +210,7 @@ export function CampaignBuilder({ advertiserId, libraryCreative, initialDraft, o
 
         {fieldErrors._ && <p className="field-error">{fieldErrors._}</p>}
         <button type="button" className="builder__save" onClick={save} disabled={saving}>
-          {saving ? 'Saving…' : 'Save & launch campaign'}
+          {saving ? 'Submitting…' : 'Submit for approval'}
         </button>
       </div>
 

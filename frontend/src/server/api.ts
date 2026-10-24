@@ -495,3 +495,57 @@ export const admin = {
   update: (type: string, id: number, values: Record<string, unknown>) =>
     sendJson<MasterDataRow>('PUT', `/api/admin/master/${type}/${id}`, values),
 };
+
+// --- Media Manager (ticket 11) ----------------------------------------------
+
+export interface InventorySlot {
+  hour: number;
+  booked: boolean;
+  premium: boolean;
+  footfall: number;
+  price: number;
+}
+
+export interface InventoryView {
+  day: string;
+  hours: number[];
+  screens: { screenId: number; code: string; zoneId: number | null; zoneName: string; slots: InventorySlot[] }[];
+  occupancyPct: number;
+  basePricePerHour: number;
+  premiumFootfallThreshold: number;
+  forecast: { date: string; occupancyPct: number; revenue: number }[];
+  forecastTotal: number;
+}
+
+export interface ApprovalItem {
+  campaignId: number;
+  name: string;
+  advertiserName: string;
+  createdAt: string;
+  scheduleStart: string;
+  scheduleEnd: string;
+  budget: number;
+  headline: string | null;
+  offerText: string | null;
+  language: string | null;
+  creativeProblems: string[];
+}
+
+export interface AdvertiserOverviewRow {
+  advertiserId: number;
+  name: string;
+  kind: string;
+  spend: number;
+  impressions: number;
+  redemptions: number;
+  runningCampaigns: number;
+  underDelivering: { campaignId: number; name: string; deliveredPct: number; expectedPct: number; pacePct: number }[];
+}
+
+export const media = {
+  inventory: () => get<InventoryView>('/api/media/inventory'),
+  approvals: () => get<ApprovalItem[]>('/api/media/approvals'),
+  approve: (id: number) => postJson<ApprovalItem>(`/api/media/approvals/${id}/approve`),
+  reject: (id: number) => postJson<ApprovalItem>(`/api/media/approvals/${id}/reject`),
+  advertisers: () => get<AdvertiserOverviewRow[]>('/api/media/advertisers'),
+};

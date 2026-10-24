@@ -64,7 +64,7 @@ public class PlaybackService {
     @Transactional
     public List<ScreenSummary> listScreens(String gate, String zone) {
         return screens.listAll().stream()
-                .filter(s -> gate == null || gate.isBlank() || gatesOf(s).contains(gate.trim()))
+                .filter(s -> gate == null || gate.isBlank() || s.gates().contains(gate.trim()))
                 .filter(s -> zone == null || zone.isBlank()
                         || (s.zone != null && s.zone.name.equalsIgnoreCase(zone.trim())))
                 .map(PlaybackService::summary)
@@ -147,10 +147,4 @@ public class PlaybackService {
         return new PromoPlayback(promo.code, expiresAt, secondsRemaining, promo.claimPath());
     }
 
-    private static List<String> gatesOf(Screen s) {
-        if (s.nearestGates == null || s.nearestGates.isBlank()) {
-            return List.of();
-        }
-        return List.of(s.nearestGates.split(","));
-    }
 }

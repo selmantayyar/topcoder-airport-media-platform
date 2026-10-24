@@ -13,6 +13,7 @@ import com.airportmedia.platform.domain.entity.Zone;
 import com.airportmedia.platform.domain.model.input.CampaignDraft;
 import com.airportmedia.platform.domain.model.input.PromoRequest;
 import com.airportmedia.platform.service.decision.DecisionService;
+import com.airportmedia.platform.service.media.MediaManagerService;
 import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
@@ -35,6 +36,9 @@ class CampaignServiceTest {
 
     @Inject
     DecisionService decisions;
+
+    @Inject
+    MediaManagerService media;
 
     @Inject
     SimulationClock clock;
@@ -63,15 +67,20 @@ class CampaignServiceTest {
     }
 
     @Test
-    void aSavedCampaignIsPickedUpByTheDecisionPipelineOnItsNextRun() {
+    void aSavedCampaignWaitsForApprovalThenIsPickedUpByThePipeline() {
         clock.jumpTo(NOW);
         Screen screen = gate42Screen();
 
         var saved = campaigns.create(draft(dutyFree().advertiser.id, null, Set.of(), Set.of(screen.id)));
 
-        assertThat(saved.status()).isEqualTo("RUNNING");
-        var decision = decisions.preview(screen.id);
-        assertThat(decision.candidates())
+        assertThat(saved.status()).isEqualTo("PENDING_APPROVAL");
+        assertThat(decisions.preview(screen.id).candidates())
+                .anyMatch(c -> c.campaignId() == saved.campaignId() && !c.eligible()
+                        && c.dropReason().contains("not running"));
+
+        media.approve(saved.campaignId());
+
+        assertThat(decisions.preview(screen.id).candidates())
                 .anyMatch(c -> c.campaignId() == saved.campaignId() && c.eligible());
     }
 
@@ -110,7 +119,7 @@ class CampaignServiceTest {
 
         var rerun = campaigns.runAgain(original.id);
 
-        assertThat(rerun.status()).isEqualTo("RUNNING");
+        assertThat(rerun.status()).isEqualTo("PENDING_APPROVAL");
         assertThat(rerun.scheduleStart()).isEqualTo(NOW);
         assertThat(Duration.between(rerun.scheduleStart(), rerun.scheduleEnd()))
                 .isEqualTo(Duration.between(original.scheduleStart, original.scheduleEnd));
@@ -132,7 +141,7 @@ class CampaignServiceTest {
         assertThat(prefill.gates()).contains("42");
         assertThat(prefill.scheduleStart()).isEqualTo(NOW);
         var saved = campaigns.create(prefill);
-        assertThat(saved.status()).isEqualTo("RUNNING");
+        assertThat(saved.status()).isEqualTo("PENDING_APPROVAL");
         assertThat(saved.campaignId()).isNotEqualTo(original.id);
     }
 

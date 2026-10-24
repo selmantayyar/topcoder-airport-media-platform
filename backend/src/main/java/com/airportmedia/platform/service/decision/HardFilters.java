@@ -67,7 +67,7 @@ public class HardFilters {
             return "outside schedule window";
         }
         CampaignTargeting t = campaign.targeting();
-        if (!t.placementUnrestricted() && !placementMatches(t, inputs)) {
+        if (!t.coversScreen(inputs.screenId(), inputs.zoneId(), inputs.screenGates())) {
             return "no placement at this screen";
         }
         if (campaign.budget() != null && campaign.spentToDate() != null
@@ -75,12 +75,5 @@ public class HardFilters {
             return "budget exhausted";
         }
         return null;
-    }
-
-    /** A screen is placed if it sits near a named gate, in a named zone, or is itself a named screen. */
-    private static boolean placementMatches(CampaignTargeting t, DecisionInputs inputs) {
-        return inputs.screenGates().stream().anyMatch(t.gates()::contains)
-                || (inputs.zoneId() != null && t.zoneIds().contains(inputs.zoneId()))
-                || t.screenIds().contains(inputs.screenId());
     }
 }

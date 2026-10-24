@@ -5,6 +5,7 @@ import { PresencePanel } from './components/PresencePanel';
 import { ScreenChooser } from './components/ScreenChooser';
 import { RetailerWorkspace } from './components/RetailerWorkspace';
 import { AdminConsole } from './components/AdminConsole';
+import { MediaManagerView } from './components/MediaManagerView';
 import { ServerStreamProvider } from './server/stream';
 import { DEFAULT_ROLE, labelForRole, themeForRole, type RoleId } from './roles';
 import './App.css';
@@ -30,6 +31,8 @@ export default function App() {
             <RetailerWorkspace />
           ) : role === 'admin' ? (
             <AdminConsole />
+          ) : role === 'media-manager' ? (
+            <MediaManagerView />
           ) : (
             <>
               <section className="placeholder-panel placeholder-panel--slim">

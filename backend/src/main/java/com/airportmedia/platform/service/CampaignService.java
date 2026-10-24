@@ -44,8 +44,9 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * The retailer's campaign workspace: build and save a campaign (it goes live on the decision pipeline's
- * next tick), preview its audience match before saving, duplicate (as a pre-filled draft) or re-run past campaigns, reuse
+ * The retailer's campaign workspace: build and submit a campaign for approval (once the Media Manager
+ * approves it, the decision pipeline picks it up on its next tick), preview its audience match before
+ * saving, duplicate (as a pre-filled draft) or re-run past campaigns, reuse
  * creatives from the library, issue promo codes, and review history with spend and ROI.
  */
 @ApplicationScoped
@@ -102,7 +103,10 @@ public class CampaignService {
         this.clock = clock;
     }
 
-    /** Saves the draft as a RUNNING campaign with its creative, so the pipeline picks it up next tick. */
+    /**
+     * Saves the draft with its creative and submits it for the Media Manager's approval; once approved it
+     * becomes RUNNING and the decision pipeline considers it on its next tick.
+     */
     @Transactional
     public CampaignHistoryRow create(CampaignDraft draft) {
         Advertiser advertiser = requireAdvertiser(draft.advertiserId());
@@ -111,7 +115,7 @@ public class CampaignService {
         Campaign c = new Campaign();
         c.advertiser = advertiser;
         c.name = draft.name();
-        c.status = CampaignStatus.RUNNING;
+        c.status = CampaignStatus.PENDING_APPROVAL;
         c.budget = draft.budget();
         c.dailyCap = draft.dailyCap();
         c.frequencyCapPerScreen = draft.frequencyCapPerScreen();
@@ -155,7 +159,10 @@ public class CampaignService {
                 decisions.simulateDraft(view), decisions.intervalSimSeconds(), platformConversion());
     }
 
-    /** One-click re-run: copies a past campaign and its creative, live from now for the original's duration. */
+    /**
+     * One-click re-run: copies a past campaign and its creative, scheduled from now for the original's
+     * duration and submitted for approval like any new campaign.
+     */
     @Transactional
     public CampaignHistoryRow runAgain(long campaignId) {
         Campaign original = requireCampaign(campaignId);
@@ -165,7 +172,7 @@ public class CampaignService {
         Campaign copy = new Campaign();
         copy.advertiser = original.advertiser;
         copy.name = original.name;
-        copy.status = CampaignStatus.RUNNING;
+        copy.status = CampaignStatus.PENDING_APPROVAL;
         copy.budget = original.budget;
         copy.dailyCap = original.dailyCap;
         copy.frequencyCapPerScreen = original.frequencyCapPerScreen;

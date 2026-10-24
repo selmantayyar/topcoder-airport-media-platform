@@ -9,6 +9,7 @@ import {
   type CreativeSummary,
   type PromoIssued,
 } from '../server/api';
+import { day, hhmm, money } from '../format';
 
 interface Props {
   advertiserId: number;
@@ -48,7 +49,7 @@ export function CampaignHistory({ advertiserId, onUseCreative, onDuplicate, refr
     campaigns
       .runAgain(row.campaignId)
       .then((c) => {
-        setNotice(`“${c.name}” is running again from now.`);
+        setNotice(`“${c.name}” was re-submitted for approval, scheduled from now.`);
         load();
       })
       .catch((e: unknown) => setNotice(errorMessage(e, 'Could not re-run this campaign')));
@@ -149,16 +150,4 @@ function PromoIssuer({ campaignId, options }: { campaignId: number; options: Bui
       )}
     </div>
   );
-}
-
-function money(amount: number): string {
-  return amount.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
-}
-
-function day(iso: string): string {
-  return new Date(iso).toLocaleDateString('en-GB', { timeZone: 'UTC', day: '2-digit', month: 'short' });
-}
-
-function hhmm(iso: string): string {
-  return new Date(iso).toLocaleTimeString('en-GB', { timeZone: 'UTC', hour: '2-digit', minute: '2-digit' });
 }

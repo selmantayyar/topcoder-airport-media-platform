@@ -38,6 +38,17 @@ public record CampaignTargeting(
         double weightHoliday,
         double weightFamily) {
 
+    /**
+     * Whether this placement lets the campaign play on a screen: unrestricted placement covers every
+     * screen; otherwise the screen must sit near a named gate, in a named zone, or be a named screen.
+     */
+    public boolean coversScreen(long screenId, Long zoneId, Set<String> screenGates) {
+        return placementUnrestricted()
+                || screenGates.stream().anyMatch(gates::contains)
+                || (zoneId != null && zoneIds.contains(zoneId))
+                || screenIds.contains(screenId);
+    }
+
     /** Placement is unrestricted when no gate, zone or screen is named. */
     public boolean placementUnrestricted() {
         return gates.isEmpty() && zoneIds.isEmpty() && screenIds.isEmpty();

@@ -7,6 +7,7 @@ import {
   type OutletSummary,
   type PassengerFlow,
 } from '../server/api';
+import { money } from '../format';
 import { useServerEvents, type ServerEvent } from '../server/stream';
 
 /**
@@ -166,8 +167,4 @@ function StatTile({ label, value, accent }: { label: string; value?: number | st
 
 function pct(fraction: number): string {
   return `${(fraction * 100).toFixed(1)}%`;
-}
-
-function money(amount: number): string {
-  return amount.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
 }

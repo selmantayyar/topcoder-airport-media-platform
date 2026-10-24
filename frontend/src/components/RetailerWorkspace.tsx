@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { campaigns, errorMessage, retailers, type CampaignDraft, type CreativeSummary, type RetailerSummary } from '../server/api';
+import { kindLabel } from '../format';
 import { CampaignBuilder } from './CampaignBuilder';
 import { CampaignHistory } from './CampaignHistory';
 import { RetailerDashboard } from './RetailerDashboard';
@@ -68,7 +69,7 @@ export function RetailerWorkspace() {
           >
             {companies.map((c) => (
               <option key={c.id} value={c.id}>
-                {c.name} ({c.kind === 'FNB' ? 'F&B' : 'Retail'} · {c.outletCount} outlet{c.outletCount === 1 ? '' : 's'})
+                {c.name} ({kindLabel(c.kind)} · {c.outletCount} outlet{c.outletCount === 1 ? '' : 's'})
               </option>
             ))}
           </select>
@@ -86,7 +87,7 @@ export function RetailerWorkspace() {
           initialDraft={prefill}
           onClearCreative={() => setLibraryCreative(null)}
           onSaved={(row) => {
-            setNotice(`“${row.name}” is live — the decision pipeline will consider it on its next run.`);
+            setNotice(`“${row.name}” was submitted for approval — once the Media Manager approves it, the decision pipeline will consider it.`);
             setLibraryCreative(null);
             setPrefill(null);
             setHistoryVersion((v) => v + 1);

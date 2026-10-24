@@ -33,13 +33,11 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -213,7 +211,7 @@ public class DecisionService {
 
         LastWinner recent = recentWinner(screen.id, now);
         return new DecisionInputs(
-                screen.id, zoneId, screenGates(screen), now, now, headcount,
+                screen.id, zoneId, screen.gates(), now, now, headcount,
                 presence != null ? presence.profile() : null,
                 nearby, views,
                 recent != null ? recent.kind() : null,
@@ -260,15 +258,6 @@ public class DecisionService {
         return last;
     }
 
-    private Set<String> screenGates(Screen screen) {
-        if (screen.nearestGates == null || screen.nearestGates.isBlank()) {
-            return Set.of();
-        }
-        return Arrays.stream(screen.nearestGates.split(","))
-                .map(String::trim)
-                .filter(s -> !s.isEmpty())
-                .collect(Collectors.toSet());
-    }
 
     // --- persistence ------------------------------------------------------
 
@@ -328,7 +317,7 @@ public class DecisionService {
         return new Shared(
                 now,
                 presenceByZone,
-                campaigns.listRunning(),
+                campaigns.listScheduledAt(now),
                 impressions.countsByCampaign(),
                 redemptions.countsByCampaign(),
                 departuresByZone,
