@@ -99,7 +99,7 @@ export const sim = {
   pause: () => post<ClockSnapshot>('/api/sim/pause'),
   speed: (value: number) => post<ClockSnapshot>(`/api/sim/speed/${value}`),
   jump: (isoTime: string) => post<ClockSnapshot>(`/api/sim/jump?time=${encodeURIComponent(isoTime)}`),
-  injectDelay: () => post('/api/sim/inject/delay'),
+  injectDelay: (minutes?: number) => post(`/api/sim/inject/delay${minutes != null ? `?minutes=${minutes}` : ''}`),
   injectGateChange: () => post('/api/sim/inject/gate-change'),
   injectScreenOffline: () => post('/api/sim/inject/screen-offline'),
 };
@@ -548,4 +548,52 @@ export const media = {
   approve: (id: number) => postJson<ApprovalItem>(`/api/media/approvals/${id}/approve`),
   reject: (id: number) => postJson<ApprovalItem>(`/api/media/approvals/${id}/reject`),
   advertisers: () => get<AdvertiserOverviewRow[]>('/api/media/advertisers'),
+};
+
+// --- Airline Representative (ticket 12) --------------------------------------
+
+export interface AirlineSummary {
+  id: number;
+  iataCode: string;
+  name: string;
+  lowCost: boolean;
+}
+
+export interface AirlineFlightRow {
+  flightId: number;
+  flightNumber: string;
+  destination: string;
+  gate: string | null;
+  scheduledTime: string;
+  departureTime: string;
+  status: string;
+  delayMinutes: number;
+  paxCount: number;
+  seats: number;
+  loadFactorPct: number;
+  minutesToDeparture: number;
+}
+
+export interface AirlineContentRow {
+  campaignId: number;
+  name: string;
+  purpose: 'SPONSORED' | 'GOODWILL';
+  status: string;
+  flightNumber: string | null;
+  gate: string | null;
+  scheduleStart: string;
+  scheduleEnd: string;
+  coFunderName: string | null;
+  headline: string | null;
+  offerText: string | null;
+}
+
+export type SponsoredContentType = 'UPGRADE_OFFER' | 'LOUNGE_PASS' | 'DESTINATION_PARTNER';
+
+export const airlines = {
+  list: () => get<AirlineSummary[]>('/api/airlines'),
+  flights: (id: number) => get<AirlineFlightRow[]>(`/api/airlines/${id}/flights`),
+  content: (id: number) => get<AirlineContentRow[]>(`/api/airlines/${id}/content`),
+  schedule: (id: number, request: { flightId: number; type: SponsoredContentType; headline: string | null; offerText: string | null }) =>
+    postJson<AirlineContentRow>(`/api/airlines/${id}/content`, request),
 };

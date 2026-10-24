@@ -1,6 +1,5 @@
 package com.airportmedia.platform.service;
 
-import com.airportmedia.platform.common.enums.FlightStatus;
 import com.airportmedia.platform.domain.entity.Creative;
 import com.airportmedia.platform.domain.entity.Flight;
 import com.airportmedia.platform.domain.entity.GateAssignment;
@@ -34,7 +33,6 @@ import java.util.List;
 public class PlaybackService {
 
     private static final int FIDS_LIMIT = 8;
-    private static final int BOARDING_WINDOW_MINUTES = 40;
     /** FIDS shows flights from 20 minutes after departure to 4 hours before it. */
     private static final long FIDS_SHOW_AFTER_DEPARTURE_MINUTES = 20;
     private static final long FIDS_SHOW_BEFORE_DEPARTURE_MINUTES = 240;
@@ -112,21 +110,9 @@ public class PlaybackService {
         Instant departure = f.departureTime();
         long minutes = Duration.between(now, departure).toMinutes();
         return new FidsEntry(f.flightNumber, f.airline.name, f.destination, ga.gate,
-                f.scheduledTime, f.estimatedTime, displayStatus(f, minutes), minutes);
+                f.scheduledTime, f.estimatedTime, FlightBoard.status(f, now), minutes);
     }
 
-    private static String displayStatus(Flight flight, long minutesToDeparture) {
-        if (flight.status == FlightStatus.DELAYED) {
-            return "DELAYED";
-        }
-        if (minutesToDeparture < 0) {
-            return "DEPARTED";
-        }
-        if (minutesToDeparture <= BOARDING_WINDOW_MINUTES) {
-            return "BOARDING";
-        }
-        return "ON TIME";
-    }
 
     private static ScreenSummary summary(Screen s) {
         return new ScreenSummary(

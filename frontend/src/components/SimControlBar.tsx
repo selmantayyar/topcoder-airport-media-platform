@@ -12,6 +12,7 @@ export function SimControlBar() {
   const { clock } = useClock();
   const [lastEvent, setLastEvent] = useState<string | null>(null);
   const [jumpTime, setJumpTime] = useState('14:10');
+  const [delayMinutes, setDelayMinutes] = useState(45);
 
   useServerEvents(
     useCallback((event: ServerEvent) => {
@@ -64,7 +65,16 @@ export function SimControlBar() {
 
       <div className="sim-bar__inject" role="group" aria-label="Inject event">
         <span className="sim-bar__label">Inject:</span>
-        <button type="button" onClick={() => sim.injectDelay()}>Delay flight</button>
+        <button type="button" onClick={() => sim.injectDelay(delayMinutes)}>Delay flight</button>
+        <select
+          value={delayMinutes}
+          onChange={(e) => setDelayMinutes(Number(e.target.value))}
+          aria-label="Delay length"
+        >
+          <option value={45}>45 min</option>
+          <option value={90}>90 min</option>
+          <option value={150}>150 min</option>
+        </select>
         <button type="button" onClick={() => sim.injectGateChange()}>Gate change</button>
         <button type="button" onClick={() => sim.injectScreenOffline()}>Screen offline</button>
       </div>
@@ -89,6 +99,8 @@ function describe(event: ServerEvent): string {
       return `📱 QR scanned (${data.code})`;
     case 'incident':
       return '⚠ Incidents updated';
+    case 'goodwill':
+      return `🎁 ${data.flightNumber}: ${String(data.voucher).toLowerCase()} voucher with ${data.partner} at gate ${data.gate}`;
     default:
       return event.type;
   }

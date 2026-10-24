@@ -592,3 +592,21 @@
 .mm__legend .mm__cell { border: 0; padding: 1px 4px; }
 .mm__qa-fail { color: var(--bad); font-size: 12px; }
 .mm__flag { color: var(--warn); font-size: 12px; }
+
+/* ---- Airline Representative (ticket 12, Peripheral Role) ---- */
+.airline__fn { font-family: var(--mono); font-weight: 600; }
+.airline__departed { opacity: .5; }
+.airline__status { font-size: 11px; font-weight: 600; letter-spacing: .4px; }
+.airline__status--boarding { color: var(--ok); }
+.airline__status--delayed { color: var(--bad); }
+.airline__status--departed { color: var(--text-muted); }
+.airline__load { display: inline-block; width: 60px; height: 8px; border-radius: 4px; vertical-align: middle; margin-right: 6px;
+  background: color-mix(in srgb, var(--border) 60%, transparent); overflow: hidden; }
+.airline__load span { display: block; height: 100%; background: var(--accent); }
+.airline__seats { color: var(--text-muted); font-size: 11px; }
+.airline__form { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; align-items: end; }
+.airline__form label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--text-muted); }
+.airline__form input, .airline__form select { font: inherit; font-size: 13px; padding: 7px 10px; border-radius: 8px;
+  border: 1px solid var(--border); background: var(--bg); color: var(--text); }
+.sim-bar select { font: inherit; font-size: 13px; padding: 4px 6px; border-radius: 6px; border: 1px solid var(--border);
+  background: transparent; color: var(--text); }

@@ -15,6 +15,7 @@ import com.airportmedia.platform.repository.FlightEventRepository;
 import com.airportmedia.platform.repository.FlightRepository;
 import com.airportmedia.platform.repository.GateAssignmentRepository;
 import com.airportmedia.platform.repository.ScreenRepository;
+import com.airportmedia.platform.service.airline.DelayGoodwillService;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.NotFoundException;
@@ -40,6 +41,7 @@ public class SimulationService {
     private final FlightEventMapper flightEventMapper;
     private final SimulationClock clock;
     private final EventStream stream;
+    private final DelayGoodwillService goodwill;
     private final AtomicInteger messageSeq = new AtomicInteger(1000);
 
     private static final int DEFAULT_DELAY_MINUTES = 45;
@@ -53,7 +55,8 @@ public class SimulationService {
             AidxTranslator aidxTranslator,
             FlightEventMapper flightEventMapper,
             SimulationClock clock,
-            EventStream stream) {
+            EventStream stream,
+            DelayGoodwillService goodwill) {
         this.flights = flights;
         this.gateAssignments = gateAssignments;
         this.screens = screens;
@@ -63,11 +66,12 @@ public class SimulationService {
         this.flightEventMapper = flightEventMapper;
         this.clock = clock;
         this.stream = stream;
+        this.goodwill = goodwill;
     }
 
     @Transactional
     public ServerEvent injectDelay(Long flightId, Integer minutes) {
-        Flight flight = resolveFlight(flightId, flights.firstUndelayedDeparture().orElse(null));
+        Flight flight = resolveFlight(flightId, flights.nextUndelayedDeparture(clock.snapshot().simTime()).orElse(null));
         int delay = minutes != null ? minutes : DEFAULT_DELAY_MINUTES;
 
         flight.status = FlightStatus.DELAYED;
@@ -75,6 +79,7 @@ public class SimulationService {
         flight.estimatedTime = flight.scheduledTime.plusSeconds(delay * 60L);
 
         persistAidxEvent(flight, delay, null, "DL");
+        goodwill.handle(flight);
 
         ServerEvent event = ServerEvent.of("flight-delayed", Map.of(
                 "flightId", flight.id,
@@ -86,7 +91,7 @@ public class SimulationService {
 
     @Transactional
     public ServerEvent injectGateChange(Long flightId, String newGate) {
-        Flight flight = resolveFlight(flightId, flights.firstUndelayedDeparture().orElse(null));
+        Flight flight = resolveFlight(flightId, flights.nextUndelayedDeparture(clock.snapshot().simTime()).orElse(null));
         GateAssignment assignment = gateAssignments.findByFlightId(flight.id)
                 .orElseThrow(() -> new NotFoundException("No gate assignment for flight " + flight.id));
         String target = newGate != null ? newGate : alternativeGate(assignment.gate);

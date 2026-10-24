@@ -1,5 +1,6 @@
 package com.airportmedia.platform.domain.entity;
 
+import com.airportmedia.platform.common.enums.CampaignPurpose;
 import com.airportmedia.platform.common.enums.CampaignStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -56,4 +57,16 @@ public class Campaign {
 
     @Column(nullable = false)
     public Instant createdAt;
+
+    /** Set for airline-sponsored content and delay-goodwill vouchers; null for ordinary campaigns. */
+    @Enumerated(EnumType.STRING)
+    public CampaignPurpose purpose;
+
+    /** The flight a sponsored or goodwill campaign is for. */
+    @ManyToOne
+    public Flight linkedFlight;
+
+    /** A retail partner co-funding a goodwill voucher. */
+    @ManyToOne
+    public Advertiser coFunder;
 }

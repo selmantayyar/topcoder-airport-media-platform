@@ -20,6 +20,7 @@ import com.airportmedia.platform.repository.GateAssignmentRepository;
 import com.airportmedia.platform.repository.ImpressionRepository;
 import com.airportmedia.platform.repository.RedemptionRepository;
 import com.airportmedia.platform.repository.ScreenRepository;
+import com.airportmedia.platform.service.FlightBoard;
 import com.airportmedia.platform.service.RetailEconomics;
 import com.airportmedia.platform.service.SimulationClock;
 import com.airportmedia.platform.service.ZonePresenceService;
@@ -231,7 +232,7 @@ public class DecisionService {
             if (ZonePresenceService.presenceFraction(minutes) <= 0) {
                 continue;
             }
-            boolean boarding = minutes >= -5 && minutes <= 40;
+            boolean boarding = minutes >= -5 && minutes <= FlightBoard.BOARDING_WINDOW_MINUTES;
             out.add(new NearbyFlight(f.flightNumber, f.airline.name, f.destination, f.haul, minutes, boarding));
         }
         out.sort(Comparator.comparingLong(NearbyFlight::minutesToDeparture));
