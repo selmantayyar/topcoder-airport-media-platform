@@ -99,10 +99,18 @@ export const sim = {
   pause: () => post<ClockSnapshot>('/api/sim/pause'),
   speed: (value: number) => post<ClockSnapshot>(`/api/sim/speed/${value}`),
   jump: (isoTime: string) => post<ClockSnapshot>(`/api/sim/jump?time=${encodeURIComponent(isoTime)}`),
-  injectDelay: (minutes?: number) => post(`/api/sim/inject/delay${minutes != null ? `?minutes=${minutes}` : ''}`),
-  injectGateChange: () => post('/api/sim/inject/gate-change'),
-  injectScreenOffline: () => post('/api/sim/inject/screen-offline'),
+  /** With a screenId, the injection lands on a flight (or the screen) the split-screen demo is showing. */
+  injectDelay: (minutes?: number, screenId?: number) =>
+    post(`/api/sim/inject/delay${query({ minutes, screenId })}`),
+  injectGateChange: (screenId?: number) => post(`/api/sim/inject/gate-change${query({ screenId })}`),
+  injectScreenOffline: (screenId?: number) => post(`/api/sim/inject/screen-offline${query({ screenId })}`),
+  injectScreenOnline: (screenId?: number) => post(`/api/sim/inject/screen-online${query({ screenId })}`),
 };
+
+function query(params: Record<string, number | undefined>): string {
+  const set = Object.entries(params).filter(([, v]) => v != null);
+  return set.length ? `?${set.map(([k, v]) => `${k}=${v}`).join('&')}` : '';
+}
 
 // --- Decision pipeline + passenger screen (ticket 06/07) --------------------
 
@@ -277,6 +285,9 @@ export interface FlowWindow {
   footfall: number;
   topDestinations: LabelCount[];
   topNationalities: LabelCount[];
+  /** Delayed departures in the window and their passengers — a captive crowd near the stores. */
+  delayedDepartures: number;
+  delayedPassengers: number;
 }
 
 export interface PassengerFlow {
@@ -457,6 +468,7 @@ export interface AdminKpis {
   activeCampaigns: number;
   averageLatencyMs: number;
   openIncidents: number;
+  delayedDepartures: number;
 }
 
 export interface ScreenDot {

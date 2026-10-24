@@ -23,4 +23,10 @@ public class FlightRepository implements PanacheRepository<Flight> {
         return find("direction = ?1 and status <> ?2 and scheduledTime > ?3 order by scheduledTime",
                 FlightDirection.DEPARTURE, FlightStatus.DELAYED, now).firstResultOptional();
     }
+
+    /** Delayed departures that haven't left yet — a live disruption count for the control room. */
+    public long countDelayedDeparturesAfter(Instant now) {
+        return count("direction = ?1 and status = ?2 and coalesce(estimatedTime, scheduledTime) > ?3",
+                FlightDirection.DEPARTURE, FlightStatus.DELAYED, now);
+    }
 }

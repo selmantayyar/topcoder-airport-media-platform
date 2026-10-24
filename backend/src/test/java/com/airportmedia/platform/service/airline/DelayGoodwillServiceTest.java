@@ -56,7 +56,7 @@ class DelayGoodwillServiceTest {
         String gate = em.createQuery("from GateAssignment where flight.id = :f", GateAssignment.class)
                 .setParameter("f", flight.id).getSingleResult().gate;
 
-        simulation.injectDelay(flight.id, 90);
+        simulation.injectDelay(flight.id, 90, null);
 
         assertThat(vouchers(flight)).singleElement().satisfies(c -> {
             assertThat(c.status).isEqualTo(CampaignStatus.RUNNING);
@@ -78,7 +78,7 @@ class DelayGoodwillServiceTest {
         clock.jumpTo(NOW);
         Flight flight = upcomingDeparture();
 
-        simulation.injectDelay(flight.id, 45);
+        simulation.injectDelay(flight.id, 45, null);
 
         assertThat(vouchers(flight)).isEmpty();
     }
@@ -88,7 +88,7 @@ class DelayGoodwillServiceTest {
         clock.jumpTo(NOW);
         Flight flight = upcomingDeparture();
 
-        simulation.injectDelay(flight.id, 150);
+        simulation.injectDelay(flight.id, 150, null);
         goodwill.scan();
         goodwill.scan();
 

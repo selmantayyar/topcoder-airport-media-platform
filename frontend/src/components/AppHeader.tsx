@@ -4,6 +4,9 @@ import { useClock, type StreamStatus } from '../server/stream';
 interface AppHeaderProps {
   activeRole: RoleId;
   onRoleChange: (role: RoleId) => void;
+  /** Split-screen demo: the role buttons pick the right-hand dashboard. */
+  demo: boolean;
+  onDemoChange: (demo: boolean) => void;
 }
 
 const STATUS_LABEL: Record<StreamStatus, string> = {
@@ -12,7 +15,7 @@ const STATUS_LABEL: Record<StreamStatus, string> = {
   error: 'Disconnected',
 };
 
-export function AppHeader({ activeRole, onRoleChange }: AppHeaderProps) {
+export function AppHeader({ activeRole, onRoleChange, demo, onDemoChange }: AppHeaderProps) {
   const { clock, status } = useClock();
 
   const simTime = clock ? new Date(clock.simTime).toLocaleTimeString('en-GB', { timeZone: 'UTC' }) : '--:--:--';
@@ -22,7 +25,7 @@ export function AppHeader({ activeRole, onRoleChange }: AppHeaderProps) {
       <div className="app-header__brand">Airport Media Platform</div>
 
       <nav className="role-switcher" aria-label="Role">
-        {ROLES.map((role) => (
+        {ROLES.filter((role) => !demo || role.id !== 'passenger').map((role) => (
           <button
             key={role.id}
             type="button"
@@ -34,6 +37,15 @@ export function AppHeader({ activeRole, onRoleChange }: AppHeaderProps) {
           </button>
         ))}
       </nav>
+
+      <button
+        type="button"
+        className={demo ? 'demo-toggle is-active' : 'demo-toggle'}
+        aria-pressed={demo}
+        onClick={() => onDemoChange(!demo)}
+      >
+        {demo ? 'Exit split-screen' : 'Split-screen demo'}
+      </button>
 
       <div className={`live-clock live-clock--${status}`} aria-live="polite">
         <span className="live-clock__dot" />

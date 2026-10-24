@@ -188,6 +188,8 @@ public class RetailerDashboardService {
         Map<String, Integer> byDestination = new LinkedHashMap<>();
         Map<String, Integer> byNationality = new LinkedHashMap<>();
         int footfall = 0;
+        int delayedDepartures = 0;
+        int delayedPassengers = 0;
 
         for (GateAssignment ga : departures) {
             Flight f = ga.flight;
@@ -199,9 +201,14 @@ public class RetailerDashboardService {
             footfall += f.paxCount;
             byDestination.merge(f.destination, f.paxCount, Integer::sum);
             byNationality.merge(routes.lookup(f.destination).language(), f.paxCount, Integer::sum);
+            if (f.status == FlightStatus.DELAYED) {
+                delayedDepartures++;
+                delayedPassengers += f.paxCount;
+            }
         }
 
-        return new FlowWindow(minutes, footfall, topN(byDestination), topN(byNationality));
+        return new FlowWindow(minutes, footfall, topN(byDestination), topN(byNationality),
+                delayedDepartures, delayedPassengers);
     }
 
     private static List<LabelCount> topN(Map<String, Integer> counts) {

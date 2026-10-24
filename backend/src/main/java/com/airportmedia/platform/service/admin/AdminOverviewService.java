@@ -17,6 +17,7 @@ import com.airportmedia.platform.domain.model.output.ServerEvent;
 import com.airportmedia.platform.domain.model.output.ZonePresence;
 import com.airportmedia.platform.repository.CampaignRepository;
 import com.airportmedia.platform.repository.DecisionLogRepository;
+import com.airportmedia.platform.repository.FlightRepository;
 import com.airportmedia.platform.repository.IncidentRepository;
 import com.airportmedia.platform.repository.ScreenRepository;
 import com.airportmedia.platform.repository.TerminalRepository;
@@ -53,6 +54,7 @@ public class AdminOverviewService {
     private final TerminalRepository terminals;
     private final DecisionLogRepository decisionLogs;
     private final CampaignRepository campaigns;
+    private final FlightRepository flights;
     private final IncidentRepository incidents;
     private final ZonePresenceService zonePresence;
     private final RetailEconomics economics;
@@ -67,6 +69,7 @@ public class AdminOverviewService {
             TerminalRepository terminals,
             DecisionLogRepository decisionLogs,
             CampaignRepository campaigns,
+            FlightRepository flights,
             IncidentRepository incidents,
             ZonePresenceService zonePresence,
             RetailEconomics economics,
@@ -79,6 +82,7 @@ public class AdminOverviewService {
         this.terminals = terminals;
         this.decisionLogs = decisionLogs;
         this.campaigns = campaigns;
+        this.flights = flights;
         this.incidents = incidents;
         this.zonePresence = zonePresence;
         this.economics = economics;
@@ -135,7 +139,8 @@ public class AdminOverviewService {
                 currency,
                 campaigns.countActiveAt(now),
                 round1(latency),
-                openIncidents);
+                openIncidents,
+                flights.countDelayedDeparturesAfter(now));
     }
 
     private List<TerminalMap> terminalMap(Instant now, List<Screen> allScreens) {

@@ -171,3 +171,10 @@ h1 {
 .claim__code { font-family: var(--mono); font-weight: 700; letter-spacing: 1px; }
 .claim__msg { color: #6b7482; }
 .claim__msg--bad { color: #dc2626; }
+
+/* Offline screen: no signal */
+.kiosk__status { font-family: var(--mono); font-size: 11px; color: #ff6b6b; border: 1px solid #5a2630;
+  border-radius: 4px; padding: 1px 6px; }
+.ad--offline { background: repeating-linear-gradient(45deg, #11151c 0 12px, #0b0e13 12px 24px); align-items: center;
+  text-align: center; color: #8592a6; }
+.ad--offline h1 { color: #ff6b6b; margin: 0; }

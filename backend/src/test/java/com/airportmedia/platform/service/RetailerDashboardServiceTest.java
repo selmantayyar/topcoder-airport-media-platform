@@ -148,4 +148,23 @@ class RetailerDashboardServiceTest {
         int after = dashboard.passengerFlow(dutyFree.advertiser.id, outlet.id).next120().footfall();
         assertThat(after).isEqualTo(before - xy501.paxCount);
     }
+
+    @Test
+    void aDelayedDepartureShowsUpAsPassengersHeldNearTheStores() {
+        clock.jumpTo(NOW);
+        Campaign dutyFree = dutyFreeCampaign();
+        Outlet outlet = pierDOutlet(dutyFree);
+        PassengerFlow.FlowWindow before = dashboard.passengerFlow(dutyFree.advertiser.id, outlet.id).next120();
+
+        Flight zq88 = em.createQuery("from Flight where flightNumber = 'ZQ88'", Flight.class).getSingleResult();
+        zq88.status = FlightStatus.DELAYED;
+        zq88.delayMinutes = 30;
+        zq88.estimatedTime = zq88.scheduledTime.plusSeconds(30 * 60L);
+        em.flush();
+
+        PassengerFlow.FlowWindow after = dashboard.passengerFlow(dutyFree.advertiser.id, outlet.id).next120();
+        assertThat(after.delayedDepartures()).isEqualTo(before.delayedDepartures() + 1);
+        assertThat(after.delayedPassengers()).isEqualTo(before.delayedPassengers() + zq88.paxCount);
+        assertThat(after.footfall()).isEqualTo(before.footfall());
+    }
 }

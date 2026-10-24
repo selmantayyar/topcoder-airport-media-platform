@@ -23,6 +23,8 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
+import java.util.function.ToIntFunction;
 
 /**
  * The passenger-screen read model: assembles what one screen should render now — its current
@@ -92,16 +94,27 @@ public class PlaybackService {
         return new PlaybackView(summary(screen), now, fids(screen, now), decision, creative, promo);
     }
 
+    /**
+     * The zone's departures in the display window, at most {@link #FIDS_LIMIT}, shown soonest first. Places go
+     * to delayed flights at the screen's own gates first, then its other own-gate flights, then the rest of the
+     * zone — so a delay at this gate stays on its board instead of being pushed off by sooner flights.
+     */
     private List<FidsEntry> fids(Screen screen, Instant now) {
         if (screen.zone == null) {
             return List.of();
         }
+        Set<String> ownGates = screen.gates();
+        Comparator<FidsEntry> soonest = Comparator.comparingLong(FidsEntry::minutesToDeparture);
+        ToIntFunction<FidsEntry> priority = e -> !ownGates.contains(e.gate()) ? 2
+                : "DELAYED".equals(e.status()) ? 0
+                : 1;
         return gateAssignments.findDeparturesInZone(screen.zone.id).stream()
                 .map(ga -> fidsEntry(ga, now))
                 .filter(e -> e.minutesToDeparture() >= -FIDS_SHOW_AFTER_DEPARTURE_MINUTES
                         && e.minutesToDeparture() <= FIDS_SHOW_BEFORE_DEPARTURE_MINUTES)
-                .sorted(Comparator.comparingLong(FidsEntry::minutesToDeparture))
+                .sorted(Comparator.comparingInt(priority).thenComparing(soonest))
                 .limit(FIDS_LIMIT)
+                .sorted(soonest)
                 .toList();
     }
 

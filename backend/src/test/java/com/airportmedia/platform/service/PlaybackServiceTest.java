@@ -2,8 +2,12 @@ package com.airportmedia.platform.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.airportmedia.platform.common.enums.FlightDirection;
+import com.airportmedia.platform.common.enums.FlightStatus;
 import com.airportmedia.platform.common.enums.ScreenOrientation;
 import com.airportmedia.platform.common.enums.ScreenStatus;
+import com.airportmedia.platform.domain.entity.Flight;
+import com.airportmedia.platform.domain.entity.GateAssignment;
 import com.airportmedia.platform.domain.entity.Screen;
 import com.airportmedia.platform.domain.entity.Zone;
 import com.airportmedia.platform.domain.model.output.PlaybackView;
@@ -72,5 +76,70 @@ class PlaybackServiceTest {
         assertThat(playback.listScreens(null, null)).isNotEmpty();
         assertThat(playback.listScreens("42", null))
                 .anyMatch(s -> s.id() == screen.id);
+    }
+
+    @Test
+    void aScreenAlwaysListsItsOwnGatesDeparturesEvenInABusyZone() {
+        clock.jumpTo(GATE_42_TIME);
+        Zone pierD = em.createQuery("from Zone where name = 'Pier D'", Zone.class).getSingleResult();
+        for (int i = 0; i < 9; i++) {
+            departure("TS" + (100 + i), "D90", pierD, GATE_42_TIME.plusSeconds((10 + i) * 60L));
+        }
+        departure("TS999", "D99", pierD, GATE_42_TIME.plusSeconds(200 * 60L));
+        Screen screen = gate42Screen();
+        screen.nearestGates = "D99";
+        em.flush();
+
+        PlaybackView view = playback.playback(screen.id);
+
+        assertThat(view.nearbyFlights()).hasSizeLessThanOrEqualTo(8)
+                .anyMatch(f -> f.flightNumber().equals("TS999"))
+                .anyMatch(f -> f.flightNumber().equals("TS100"));
+        assertThat(view.nearbyFlights()).extracting(f -> f.minutesToDeparture()).isSorted();
+    }
+
+    @Test
+    void aDelayedDepartureAtTheScreensGatesStaysOnItsBoard() {
+        clock.jumpTo(GATE_42_TIME);
+        Zone pierD = em.createQuery("from Zone where name = 'Pier D'", Zone.class).getSingleResult();
+        for (int i = 0; i < 9; i++) {
+            departure("TS" + (100 + i), "D90", pierD, GATE_42_TIME.plusSeconds((10 + i) * 60L));
+        }
+        Flight delayed = departure("TS999", "D99", pierD, GATE_42_TIME.plusSeconds(20 * 60L));
+        delayed.status = FlightStatus.DELAYED;
+        delayed.delayMinutes = 150;
+        delayed.estimatedTime = delayed.scheduledTime.plusSeconds(150 * 60L);
+        departure("TS998", "D99", pierD, GATE_42_TIME.plusSeconds(170 * 60L));
+        Screen screen = gate42Screen();
+        screen.nearestGates = "D90,D99";
+        em.flush();
+
+        PlaybackView view = playback.playback(screen.id);
+
+        assertThat(view.nearbyFlights()).hasSize(8)
+                .anyMatch(f -> f.flightNumber().equals("TS999") && f.status().equals("DELAYED"))
+                .noneMatch(f -> f.flightNumber().equals("TS998"));
+    }
+
+    private Flight departure(String number, String gate, Zone zone, Instant scheduled) {
+        Flight template = em.createQuery("from Flight where flightNumber = 'XY501'", Flight.class).getSingleResult();
+        Flight f = new Flight();
+        f.flightNumber = number;
+        f.airline = template.airline;
+        f.direction = FlightDirection.DEPARTURE;
+        f.origin = template.origin;
+        f.destination = template.destination;
+        f.haul = template.haul;
+        f.aircraftType = template.aircraftType;
+        f.paxCount = 100;
+        f.status = FlightStatus.SCHEDULED;
+        f.scheduledTime = scheduled;
+        em.persist(f);
+        GateAssignment ga = new GateAssignment();
+        ga.flight = f;
+        ga.gate = gate;
+        ga.zone = zone;
+        em.persist(ga);
+        return f;
     }
 }

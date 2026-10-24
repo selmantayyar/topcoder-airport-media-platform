@@ -22,7 +22,8 @@ public record AdminOverview(
             String currency,
             long activeCampaigns,
             double averageLatencyMs,
-            long openIncidents) {}
+            long openIncidents,
+            long delayedDepartures) {}
 
     public record TerminalMap(long id, String code, String name, List<ZoneMap> zones) {}
 

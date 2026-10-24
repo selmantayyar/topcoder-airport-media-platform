@@ -8,7 +8,12 @@ const SPEEDS = [1, 10, 60];
 const SIM_DAY = '2026-10-23';
 const WORKED_EXAMPLE_TIME = `${SIM_DAY}T14:10:00Z`;
 
-export function SimControlBar() {
+interface Props {
+  /** In split-screen demo, injections land on this screen (or a flight at its gates) so both panes react. */
+  focusScreenId?: number;
+}
+
+export function SimControlBar({ focusScreenId }: Props) {
   const { clock } = useClock();
   const [lastEvent, setLastEvent] = useState<string | null>(null);
   const [jumpTime, setJumpTime] = useState('14:10');
@@ -65,7 +70,7 @@ export function SimControlBar() {
 
       <div className="sim-bar__inject" role="group" aria-label="Inject event">
         <span className="sim-bar__label">Inject:</span>
-        <button type="button" onClick={() => sim.injectDelay(delayMinutes)}>Delay flight</button>
+        <button type="button" onClick={() => sim.injectDelay(delayMinutes, focusScreenId)}>Delay flight</button>
         <select
           value={delayMinutes}
           onChange={(e) => setDelayMinutes(Number(e.target.value))}
@@ -75,8 +80,9 @@ export function SimControlBar() {
           <option value={90}>90 min</option>
           <option value={150}>150 min</option>
         </select>
-        <button type="button" onClick={() => sim.injectGateChange()}>Gate change</button>
-        <button type="button" onClick={() => sim.injectScreenOffline()}>Screen offline</button>
+        <button type="button" onClick={() => sim.injectGateChange(focusScreenId)}>Gate change</button>
+        <button type="button" onClick={() => sim.injectScreenOffline(focusScreenId)}>Screen offline</button>
+        <button type="button" onClick={() => sim.injectScreenOnline(focusScreenId)}>Screen online</button>
       </div>
 
       {lastEvent && <div className="sim-bar__toast">{lastEvent}</div>}
@@ -93,6 +99,8 @@ function describe(event: ServerEvent): string {
       return `🚪 ${data.flightNumber} moved to gate ${data.newGate}`;
     case 'screen-offline':
       return `🖥 Screen ${data.code} went offline`;
+    case 'screen-online':
+      return `🖥 Screen ${data.code} is back online`;
     case 'redemption':
       return `🎟 Offer claimed (${data.code})`;
     case 'scan':

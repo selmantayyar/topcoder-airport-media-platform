@@ -7,6 +7,8 @@ import {
   type InventorySlot,
   type InventoryView,
 } from '../server/api';
+import { isInjectedEvent } from '../server/events';
+import { useServerEvents, type ServerEvent } from '../server/stream';
 import { day, kindLabel, money } from '../format';
 
 type Tab = 'inventory' | 'yield' | 'approvals' | 'advertisers';
@@ -31,6 +33,12 @@ export function MediaManagerView() {
   useEffect(() => {
     load();
   }, [load]);
+
+  useServerEvents(
+    useCallback((event: ServerEvent) => {
+      if (event.type === 'incident' || isInjectedEvent(event)) load();
+    }, [load]),
+  );
 
   const decide = (item: ApprovalItem, approve: boolean) =>
     (approve ? media.approve(item.campaignId) : media.reject(item.campaignId))

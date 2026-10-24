@@ -14,6 +14,10 @@ public class ScreenRepository implements PanacheRepository<Screen> {
         return find("status", ScreenStatus.ONLINE).firstResultOptional();
     }
 
+    public Optional<Screen> firstOffline() {
+        return find("status", ScreenStatus.OFFLINE).firstResultOptional();
+    }
+
     public List<Screen> listOnline() {
         return list("status", ScreenStatus.ONLINE);
     }

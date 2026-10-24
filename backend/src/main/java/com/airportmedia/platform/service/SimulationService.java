@@ -19,8 +19,12 @@ import com.airportmedia.platform.service.airline.DelayGoodwillService;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.NotFoundException;
+import java.time.Instant;
 import java.time.ZoneOffset;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -69,9 +73,10 @@ public class SimulationService {
         this.goodwill = goodwill;
     }
 
+    /** @param screenId when set (and no flightId), the delay lands on a flight near that screen */
     @Transactional
-    public ServerEvent injectDelay(Long flightId, Integer minutes) {
-        Flight flight = resolveFlight(flightId, flights.nextUndelayedDeparture(clock.snapshot().simTime()).orElse(null));
+    public ServerEvent injectDelay(Long flightId, Integer minutes, Long screenId) {
+        Flight flight = resolveFlight(flightId, defaultTarget(screenId));
         int delay = minutes != null ? minutes : DEFAULT_DELAY_MINUTES;
 
         flight.status = FlightStatus.DELAYED;
@@ -85,13 +90,14 @@ public class SimulationService {
                 "flightId", flight.id,
                 "flightNumber", flight.flightNumber,
                 "delayMinutes", delay));
-        stream.emit(event);
+        stream.emitAfterCommit(event);
         return event;
     }
 
+    /** @param screenId when set (and no flightId), the gate change lands on a flight near that screen */
     @Transactional
-    public ServerEvent injectGateChange(Long flightId, String newGate) {
-        Flight flight = resolveFlight(flightId, flights.nextUndelayedDeparture(clock.snapshot().simTime()).orElse(null));
+    public ServerEvent injectGateChange(Long flightId, String newGate, Long screenId) {
+        Flight flight = resolveFlight(flightId, defaultTarget(screenId));
         GateAssignment assignment = gateAssignments.findByFlightId(flight.id)
                 .orElseThrow(() -> new NotFoundException("No gate assignment for flight " + flight.id));
         String target = newGate != null ? newGate : alternativeGate(assignment.gate);
@@ -103,7 +109,7 @@ public class SimulationService {
                 "flightId", flight.id,
                 "flightNumber", flight.flightNumber,
                 "newGate", target));
-        stream.emit(event);
+        stream.emitAfterCommit(event);
         return event;
     }
 
@@ -119,7 +125,24 @@ public class SimulationService {
         ServerEvent event = ServerEvent.of("screen-offline", Map.of(
                 "screenId", screen.id,
                 "code", screen.code));
-        stream.emit(event);
+        stream.emitAfterCommit(event);
+        return event;
+    }
+
+    /** Brings a screen back online (the given one, else the first offline screen) so a demo can be re-run. */
+    @Transactional
+    public ServerEvent injectScreenOnline(Long screenId) {
+        Screen screen = screenId != null
+                ? screens.findByIdOptional(screenId).orElseThrow(() -> new NotFoundException("No screen " + screenId))
+                : screens.firstOffline().orElseThrow(() -> new NotFoundException("No offline screen to restore"));
+
+        screen.status = ScreenStatus.ONLINE;
+        screen.statusChangedAt = clock.snapshot().simTime();
+
+        ServerEvent event = ServerEvent.of("screen-online", Map.of(
+                "screenId", screen.id,
+                "code", screen.code));
+        stream.emitAfterCommit(event);
         return event;
     }
 
@@ -133,6 +156,33 @@ public class SimulationService {
         String xml = eventSource.active().buildFlightLegNotif(change);
         var update = aidxTranslator.parse(xml);
         flightEvents.persist(flightEventMapper.toFlightEvent(update, flight));
+    }
+
+    /**
+     * The injection target when no flight is named: the next undelayed departure from the given screen's own
+     * gates, else from its zone (so the change shows on that screen's FIDS strip and decision), else — or with
+     * no screen — the next undelayed departure anywhere.
+     */
+    private Flight defaultTarget(Long screenId) {
+        Instant now = clock.snapshot().simTime();
+        if (screenId != null) {
+            Screen screen = screens.findByIdOptional(screenId)
+                    .orElseThrow(() -> new NotFoundException("No screen " + screenId));
+            if (screen.zone != null) {
+                List<GateAssignment> upcoming = gateAssignments.findDeparturesInZone(screen.zone.id).stream()
+                        .filter(ga -> ga.flight.status != FlightStatus.DELAYED && ga.flight.scheduledTime.isAfter(now))
+                        .toList();
+                Comparator<GateAssignment> soonest = Comparator.comparing(ga -> ga.flight.scheduledTime);
+                Optional<GateAssignment> near = upcoming.stream()
+                        .filter(ga -> screen.gates().contains(ga.gate))
+                        .min(soonest)
+                        .or(() -> upcoming.stream().min(soonest));
+                if (near.isPresent()) {
+                    return near.get().flight;
+                }
+            }
+        }
+        return flights.nextUndelayedDeparture(now).orElse(null);
     }
 
     private Flight resolveFlight(Long flightId, Flight fallback) {

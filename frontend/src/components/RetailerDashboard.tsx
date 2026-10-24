@@ -8,12 +8,14 @@ import {
   type PassengerFlow,
 } from '../server/api';
 import { money } from '../format';
+import { isInjectedEvent } from '../server/events';
 import { useServerEvents, type ServerEvent } from '../server/stream';
 
 /**
  * Retailer live dashboard for one company: its impression → scan → redemption funnel, attributed
- * revenue, and next-60/120-minute footfall. Polls every few seconds and refetches immediately on
- * redemption/scan events, so a QR claim shows up within ~2s. Remount (via `key`) to switch company.
+ * revenue, and next-60/120-minute footfall (with passengers held by delays). Polls every few seconds
+ * and refetches immediately on redemption/scan and injected events, so a QR claim or a delay shows up
+ * within ~2s. Remount (via `key`) to switch company.
  */
 export function RetailerDashboard({ advertiserId }: { advertiserId: number }) {
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
@@ -39,11 +41,11 @@ export function RetailerDashboard({ advertiserId }: { advertiserId: number }) {
     retailers.outlets(advertiserId).then(setOutlets).catch(() => undefined);
   }, [advertiserId]);
 
-  // A claim/scan anywhere should surface on this dashboard within ~2s.
+  // A claim/scan anywhere, or an injected flight/screen event, should surface on this dashboard within ~2s.
   useServerEvents(
     useCallback(
       (event: ServerEvent) => {
-        if (event.type === 'redemption' || event.type === 'scan') refresh();
+        if (event.type === 'redemption' || event.type === 'scan' || isInjectedEvent(event)) refresh();
       },
       [refresh],
     ),
@@ -131,6 +133,12 @@ function Flow({ flow }: { flow: FlowWindow }) {
       <p className="flow__total">
         <strong>{flow.footfall.toLocaleString()}</strong> passengers expected in the next {flow.minutes} min
       </p>
+      {flow.delayedDepartures > 0 && (
+        <p className="flow__delayed">
+          <strong>{flow.delayedPassengers.toLocaleString()}</strong> held by {flow.delayedDepartures} delayed
+          {flow.delayedDepartures === 1 ? ' departure' : ' departures'} — extra dwell time near your stores
+        </p>
+      )}
       <BarList title="Top destinations" items={flow.topDestinations} />
       <BarList title="Top nationalities (by route language)" items={flow.topNationalities} />
     </div>

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { admin, type AdminKpis, type AdminOverview, type MasterDataSchema } from '../server/api';
+import { isInjectedEvent } from '../server/events';
 import { useClock, useServerEvents, type ServerEvent } from '../server/stream';
 import { IncidentTracker } from './IncidentTracker';
 import { MasterDataTable } from './MasterDataTable';
@@ -35,7 +36,7 @@ export function AdminConsole() {
 
   useServerEvents(
     useCallback((event: ServerEvent) => {
-      if (event.type === 'incident' || event.type === 'screen-offline') refresh();
+      if (event.type === 'incident' || isInjectedEvent(event)) refresh();
     }, [refresh]),
   );
 
@@ -90,6 +91,7 @@ function KpiStrip({ kpis }: { kpis: AdminKpis }) {
       <Tile label="Active campaigns" value={kpis.activeCampaigns.toLocaleString()} />
       <Tile label="Avg latency" value={`${Math.round(kpis.averageLatencyMs)} ms`} />
       <Tile label="Open incidents" value={kpis.openIncidents.toLocaleString()} alert={kpis.openIncidents > 0} />
+      <Tile label="Delayed departures" value={kpis.delayedDepartures.toLocaleString()} alert={kpis.delayedDepartures > 0} />
     </div>
   );
 }

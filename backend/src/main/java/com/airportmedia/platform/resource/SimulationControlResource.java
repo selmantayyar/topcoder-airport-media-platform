@@ -65,19 +65,31 @@ public class SimulationControlResource {
 
     @POST
     @Path("/inject/delay")
-    public ServerEvent injectDelay(@QueryParam("flightId") Long flightId, @QueryParam("minutes") Integer minutes) {
-        return simulation.injectDelay(flightId, minutes);
+    public ServerEvent injectDelay(
+            @QueryParam("flightId") Long flightId,
+            @QueryParam("minutes") Integer minutes,
+            @QueryParam("screenId") Long screenId) {
+        return simulation.injectDelay(flightId, minutes, screenId);
     }
 
     @POST
     @Path("/inject/gate-change")
-    public ServerEvent injectGateChange(@QueryParam("flightId") Long flightId, @QueryParam("gate") String gate) {
-        return simulation.injectGateChange(flightId, gate);
+    public ServerEvent injectGateChange(
+            @QueryParam("flightId") Long flightId,
+            @QueryParam("gate") String gate,
+            @QueryParam("screenId") Long screenId) {
+        return simulation.injectGateChange(flightId, gate, screenId);
     }
 
     @POST
     @Path("/inject/screen-offline")
     public ServerEvent injectScreenOffline(@QueryParam("screenId") Long screenId) {
         return simulation.injectScreenOffline(screenId);
+    }
+
+    @POST
+    @Path("/inject/screen-online")
+    public ServerEvent injectScreenOnline(@QueryParam("screenId") Long screenId) {
+        return simulation.injectScreenOnline(screenId);
     }
 }

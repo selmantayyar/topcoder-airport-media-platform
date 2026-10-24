@@ -391,6 +391,9 @@
   border-radius: 8px; border: 1px solid var(--border); background: var(--panel); color: var(--text); }
 .flow__total { font-size: 14px; color: var(--text-muted); margin: 0 0 14px; }
 .flow__total strong { color: var(--text); font-size: 18px; font-variant-numeric: tabular-nums; }
+.flow__delayed { font-size: 13px; margin: -6px 0 14px; padding: 6px 10px; border-radius: 8px; color: var(--text);
+  background: color-mix(in srgb, var(--warn) 12%, var(--panel)); border: 1px solid color-mix(in srgb, var(--warn) 40%, var(--border)); }
+.flow__delayed strong { font-variant-numeric: tabular-nums; }
 .barlist { margin-bottom: 16px; }
 .barlist h4 { margin: 0 0 8px; font-size: 12px; text-transform: uppercase; letter-spacing: .4px; color: var(--text-muted); }
 /* Single-series magnitude: one hue, rounded data-end, value direct-labelled in ink. */
@@ -637,3 +640,36 @@
   border: 1px solid var(--border); background: var(--bg); color: var(--text); }
 .sim-bar select { font: inherit; font-size: 13px; padding: 4px 6px; border-radius: 6px; border: 1px solid var(--border);
   background: transparent; color: var(--text); }
+
+/* ---- Split-screen demo mode (ticket 14) ---- */
+.demo-toggle { font: inherit; font-size: 13px; padding: 6px 12px; border-radius: 6px; white-space: nowrap; cursor: pointer;
+  border: 1px dashed var(--accent); background: transparent; color: var(--text); }
+.demo-toggle.is-active { border-style: solid; background: color-mix(in srgb, var(--accent) 16%, transparent); }
+.app-shell--demo .app-main { padding: 12px 16px; }
+.demo { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: 16px; align-items: start; }
+@media (max-width: 1100px) { .demo { grid-template-columns: 1fr; } }
+.demo__pane { min-width: 0; }
+.demo__pane--screen { position: sticky; top: 120px; display: flex; flex-direction: column; gap: 8px; }
+@media (max-width: 1100px) { .demo__pane--screen { position: static; } }
+.demo__head { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; flex-wrap: wrap; }
+.demo__head h2 { margin: 0; font-size: 15px; text-transform: uppercase; letter-spacing: .6px; color: var(--text-muted); }
+.demo__head select { font: inherit; font-size: 13px; padding: 5px 8px; border-radius: 6px; border: 1px solid var(--border);
+  background: var(--panel); color: var(--text); max-width: 100%; }
+.demo__screen { display: flex; min-height: 460px; border-radius: 12px; overflow: hidden; border: 6px solid #1a1f29;
+  background: #0a0e14; }
+.demo__screen > .kiosk--embedded { flex: 1; height: auto; }
+.demo__hint { margin: 0; font-size: 12px; color: var(--text-muted); }
+
+/* The kiosk at pane scale: same render, contained instead of fixed to the window */
+.kiosk--embedded { position: relative; inset: auto; height: 100%; }
+.kiosk--embedded .kiosk__stage { padding: 14px; gap: 12px; }
+.kiosk--embedded .ad { padding: 20px 24px; gap: 8px; border-radius: 12px; }
+.kiosk--embedded .ad__brand { font-size: 12px; }
+.kiosk--embedded .ad__headline { font-size: clamp(20px, 2.6vw, 38px); }
+.kiosk--embedded .ad__offer { font-size: clamp(14px, 1.5vw, 22px); }
+.kiosk--embedded .ad__body { font-size: 13px; }
+.kiosk--embedded .promo { min-width: 0; padding: 12px; border-radius: 12px; }
+.kiosk--embedded .promo svg { width: 110px; height: 110px; }
+.kiosk--embedded .fids__rows { flex-wrap: wrap; overflow: visible; gap: 6px; }
+.kiosk--embedded .fids__row { font-size: 11px; padding: 3px 7px; gap: 7px; }
+.kiosk--portrait.kiosk--embedded .kiosk__stage { flex-direction: row; }

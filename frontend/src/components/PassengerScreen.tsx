@@ -2,17 +2,28 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { QRCodeSVG } from 'qrcode.react';
 import { lan, screens, type PlaybackView } from '../server/api';
-import { useClock } from '../server/stream';
+import { isInjectedEvent } from '../server/events';
+import { useClock, useServerEvents, type ServerEvent } from '../server/stream';
 import { WhyThisAd } from './WhyThisAd';
 
-/**
- * Full-screen render of one physical screen (9:16 or 16:9). It plays whatever the decision pipeline
- * currently chooses, refreshing as the simulation clock advances, with a FIDS context strip, a promo
- * QR + live countdown, and a "Why this ad?" overlay.
- */
+/** The full-screen kiosk route: /screen/:id. */
 export function PassengerScreen() {
   const { id } = useParams();
-  const screenId = Number(id);
+  return <PassengerScreenView screenId={Number(id)} />;
+}
+
+interface ViewProps {
+  screenId: number;
+  /** Rendered inside the split-screen demo instead of filling the window (no kiosk back link). */
+  embedded?: boolean;
+}
+
+/**
+ * Render of one physical screen (9:16 or 16:9). It plays whatever the decision pipeline currently chooses,
+ * refreshing as the simulation clock advances and immediately on any injected event, with a FIDS context
+ * strip, a promo QR + live countdown, and a "Why this ad?" overlay.
+ */
+export function PassengerScreenView({ screenId, embedded = false }: ViewProps) {
   const { clock } = useClock();
   const [view, setView] = useState<PlaybackView | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -37,16 +48,24 @@ export function PassengerScreen() {
     };
   }, [refresh]);
 
+  useServerEvents(
+    useCallback((event: ServerEvent) => {
+      if (isInjectedEvent(event)) refresh();
+    }, [refresh]),
+  );
+
+  const embeddedClass = embedded ? ' kiosk--embedded' : '';
+
   if (error) {
     return (
-      <div className="kiosk kiosk--error">
+      <div className={`kiosk kiosk--error${embeddedClass}`}>
         <p>Could not load screen {screenId}: {error}</p>
-        <Link to="/">← Back to chooser</Link>
+        {!embedded && <Link to="/">← Back to chooser</Link>}
       </div>
     );
   }
   if (!view) {
-    return <div className="kiosk kiosk--loading">Loading screen {screenId}…</div>;
+    return <div className={`kiosk kiosk--loading${embeddedClass}`}>Loading screen {screenId}…</div>;
   }
 
   const portrait = view.screen.orientation === 'PORTRAIT';
@@ -55,17 +74,23 @@ export function PassengerScreen() {
   const claimUrl = promo ? `${lan.base()}${promo.claimPath}` : '';
 
   return (
-    <div className={`kiosk ${portrait ? 'kiosk--portrait' : 'kiosk--landscape'}`}>
+    <div className={`kiosk ${portrait ? 'kiosk--portrait' : 'kiosk--landscape'}${embeddedClass}`}>
       <div className="kiosk__chrome">
-        <Link to="/" className="kiosk__back">← Screens</Link>
+        {!embedded && <Link to="/" className="kiosk__back">← Screens</Link>}
         <span className="kiosk__id">{view.screen.code} · {view.screen.zoneName}</span>
+        {view.screen.status !== 'ONLINE' && <span className="kiosk__status">{view.screen.status}</span>}
         <button type="button" className="kiosk__why" onClick={() => setShowWhy(true)}>Why this ad?</button>
       </div>
 
       <Fids flights={view.nearbyFlights} />
 
       <div className="kiosk__stage">
-        {creative ? (
+        {view.screen.status === 'OFFLINE' ? (
+          <div className="ad ad--offline">
+            <h1>No signal</h1>
+            <p>This screen is offline — the platform has raised an incident.</p>
+          </div>
+        ) : creative ? (
           <div className={`ad ad--${creative.templateKey}`}>
             <span className="ad__brand">{creative.advertiserName}</span>
             <h1 className="ad__headline">{creative.headline}</h1>
@@ -79,7 +104,7 @@ export function PassengerScreen() {
           </div>
         )}
 
-        {promo && (
+        {promo && view.screen.status !== 'OFFLINE' && (
           <aside className="promo">
             <QRCodeSVG value={claimUrl} size={portrait ? 220 : 180} includeMargin />
             <div className="promo__meta">

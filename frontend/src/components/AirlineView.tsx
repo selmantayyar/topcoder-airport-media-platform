@@ -7,6 +7,7 @@ import {
   type AirlineSummary,
   type SponsoredContentType,
 } from '../server/api';
+import { isInjectedEvent } from '../server/events';
 import { useServerEvents, type ServerEvent } from '../server/stream';
 import { hhmm } from '../format';
 
@@ -50,7 +51,7 @@ export function AirlineView() {
   // Delays and the vouchers they trigger change this view without anyone touching it.
   useServerEvents(
     useCallback((event: ServerEvent) => {
-      if (event.type === 'goodwill' || event.type === 'flight-delayed' || event.type === 'gate-changed') load();
+      if (event.type === 'goodwill' || isInjectedEvent(event)) load();
     }, [load]),
   );
 
