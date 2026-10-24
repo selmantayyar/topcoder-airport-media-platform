@@ -64,8 +64,24 @@ class SeedServiceTest {
         assertThat(count("Screen")).isEqualTo(20);
         assertThat(count("Outlet")).isEqualTo(8);
         assertThat(count("Advertiser")).isGreaterThan(0);
-        assertThat(count("Campaign")).isEqualTo(6);
+        // 6 random campaigns (%test config) plus the 3 Gate 42 worked-example campaigns.
+        assertThat(count("Campaign")).isEqualTo(9);
         assertThat(count("Creative")).isGreaterThan(0);
         assertThat(count("Impression")).isGreaterThan(0);
+    }
+
+    @Test
+    void gate42WorkedExampleCampaignsAreSeededAndRunning() {
+        Long running = em.createQuery(
+                "select count(c) from Campaign c where c.status = 'RUNNING' and "
+                        + "(c.name like 'Azure Duty-Free%' or c.name like 'Bean & Brew Coffee%' "
+                        + "or c.name like 'Luxe Watches%')", Long.class)
+                .getSingleResult();
+        assertThat(running).isEqualTo(3);
+
+        Long zq88 = em.createQuery(
+                "select count(f) from Flight f where f.flightNumber = 'ZQ88' and f.destination = 'MLE'", Long.class)
+                .getSingleResult();
+        assertThat(zq88).isEqualTo(1);
     }
 }

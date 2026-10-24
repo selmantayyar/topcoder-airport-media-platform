@@ -42,7 +42,10 @@ public class MockFlightSource implements FlightSource {
         Random rng = new Random(42);
         List<AodbRecord> rows = new ArrayList<>(flightCount);
         rows.add(workedExample());
-        for (int i = 1; i < flightCount; i++) {
+        if (flightCount > 1) {
+            rows.add(workedExampleSecondary());
+        }
+        for (int i = rows.size(); i < flightCount; i++) {
             rows.add(randomRow(rng, i));
         }
         return AodbCsvCodec.encode(rows);
@@ -55,6 +58,16 @@ public class MockFlightSource implements FlightSource {
                 iso(14, 10), iso(14, 15), "", "",
                 "42", "S42", "T2", "D40-D50", "", "DELAYED", "45", "93", "",
                 "290", "28", "42", "INT");
+    }
+
+    /** The second flight in the Gate 42 example: ZQ88, a low-cost holiday run boarding at gate 43. */
+    private AodbRecord workedExampleSecondary() {
+        return new AodbRecord(
+                "ZQ88", "ZQ", "ZQA", "DEP", SampleAirport.IATA, "MLE", "", "A321", "ZQ-A88", "160",
+                iso(15, 0), iso(15, 0), "", "", "", "",
+                iso(15, 0), iso(15, 5), "", "",
+                "43", "S43", "T2", "D40-D50", "", "SCHEDULED", "0", "", "",
+                "180", "0", "20", "INT");
     }
 
     private AodbRecord randomRow(Random rng, int i) {

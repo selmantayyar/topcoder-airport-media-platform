@@ -128,11 +128,14 @@ public class SeedService {
         List<Advertiser> advertisers = seedAdvertisers(airlines);
         seedOutlets(advertisers, new ArrayList<>(zonesByAcris.values()), rng);
         List<Screen> screens = seedScreens(new ArrayList<>(zonesByAcris.values()), gateToZone, rng);
+        List<Campaign> workedExample = seedWorkedExampleCampaigns(advertisers, flights);
         List<Campaign> campaigns = seedCampaigns(advertisers, flights, rng);
+        // History seeds only the random campaigns, so the Gate 42 trio stays cold and reproduces
+        // the documented worked-example scores (neutral engagement prior).
         seedHistory(campaigns, screens, rng);
 
-        LOG.infof("Seed complete: %d flights, %d AIDX events, %d screens, %d outlets, %d campaigns",
-                flights.size(), events, screens.size(), outletCount, campaigns.size());
+        LOG.infof("Seed complete: %d flights, %d AIDX events, %d screens, %d outlets, %d campaigns (+%d worked-example)",
+                flights.size(), events, screens.size(), outletCount, campaigns.size(), workedExample.size());
     }
 
     // --- ACRIS topology ---------------------------------------------------
@@ -352,6 +355,77 @@ public class SeedService {
         return screens;
     }
 
+    /**
+     * The three Gate 42 worked-example campaigns (ADR 0004), with fixed targeting so the live app
+     * reproduces the documented decision: the duty-free campaign wins at a gate-42 screen.
+     */
+    private List<Campaign> seedWorkedExampleCampaigns(List<Advertiser> advertisers, List<Flight> flights) {
+        Map<String, Advertiser> byName = new HashMap<>();
+        for (Advertiser a : advertisers) {
+            byName.putIfAbsent(a.name, a);
+        }
+        Instant dayStart = DEMO_DAY.atStartOfDay().toInstant(ZoneOffset.UTC);
+        String placement = "{\"gates\":[\"40\",\"41\",\"42\",\"43\",\"44\",\"45\"]}";
+
+        record Spec(String advertiser, String offer, String segments, String filters) {}
+        List<Spec> specs = List.of(
+                new Spec("Azure Duty-Free", "15% off perfume",
+                        "{\"business\":0.2,\"holiday\":0.7,\"family\":0.4,\"spendTarget\":\"MEDIUM\"}",
+                        "{\"haul\":\"INTERNATIONAL\",\"minDwellMinutes\":15,\"minCrowd\":100}"),
+                new Spec("Bean & Brew Coffee", "Free coffee upgrade",
+                        "{\"business\":0.4,\"holiday\":0.4,\"family\":0.4,\"spendTarget\":\"LOW\"}",
+                        "{\"minCrowd\":50}"),
+                new Spec("Luxe Watches", "Premium watch sale",
+                        "{\"business\":0.7,\"holiday\":0.2,\"family\":0.1,\"spendTarget\":\"HIGH\"}",
+                        "{\"haul\":\"INTERNATIONAL\",\"minCrowd\":100}"));
+
+        List<Campaign> created = new ArrayList<>();
+        for (Spec spec : specs) {
+            Advertiser advertiser = byName.get(spec.advertiser());
+            if (advertiser == null) {
+                continue;
+            }
+            Campaign c = new Campaign();
+            c.advertiser = advertiser;
+            c.name = advertiser.name + " — " + spec.offer();
+            c.status = CampaignStatus.RUNNING;
+            c.budget = BigDecimal.valueOf(40000);
+            c.dailyCap = BigDecimal.valueOf(5000);
+            c.frequencyCapPerScreen = 6;
+            c.segmentWeightsJson = spec.segments();
+            c.hardFiltersJson = spec.filters();
+            c.placementJson = placement;
+            c.scheduleStart = dayStart;
+            c.scheduleEnd = dayStart.plusSeconds(7L * 86400);
+            c.createdAt = dayStart.minusSeconds(86400);
+            em.persist(c);
+
+            Creative creative = new Creative();
+            creative.advertiser = advertiser;
+            creative.campaign = c;
+            creative.name = c.name + " creative";
+            creative.templateKey = "promo-basic";
+            creative.language = "en";
+            creative.headline = spec.offer();
+            creative.body = "Limited-time offer for travellers at " + SampleAirport.NAME + ".";
+            creative.offerText = spec.offer();
+            em.persist(creative);
+
+            if (spec.advertiser().equals("Azure Duty-Free")) {
+                PromoCode promo = new PromoCode();
+                promo.campaign = c;
+                promo.code = "AMP-PERFUME15";
+                promo.validUntil = dayStart.plusSeconds(86400);
+                promo.linkedFlight = flights.isEmpty() ? null : flights.get(0);
+                promo.redeemed = false;
+                em.persist(promo);
+            }
+            created.add(c);
+        }
+        em.flush();
+        return created;
+    }
+
     private List<Campaign> seedCampaigns(List<Advertiser> advertisers, List<Flight> flights, Random rng) {
         CampaignStatus[] statuses = {
             CampaignStatus.RUNNING, CampaignStatus.RUNNING, CampaignStatus.APPROVED,
@@ -373,7 +447,8 @@ public class SeedService {
             c.segmentWeightsJson = "{\"family\":%.1f,\"holiday\":%.1f,\"business\":%.1f}"
                     .formatted(rng.nextDouble(), rng.nextDouble(), rng.nextDouble());
             c.hardFiltersJson = "{\"haul\":\"INTERNATIONAL\",\"minDwellMinutes\":15,\"minCrowd\":100}";
-            c.placementJson = "{\"gates\":[\"40\",\"41\",\"42\",\"43\",\"44\",\"45\"]}";
+            // Random campaigns target piers A/B/C; Pier D (gate 42) is reserved for the worked example.
+            c.placementJson = RANDOM_CAMPAIGN_PLACEMENTS[i % RANDOM_CAMPAIGN_PLACEMENTS.length];
             boolean past = c.status == CampaignStatus.ENDED;
             c.scheduleStart = past ? dayStart.minusSeconds((long) (historyDays) * 86400) : dayStart;
             c.scheduleEnd = past ? dayStart.minusSeconds(86400) : dayStart.plusSeconds(7L * 86400);
@@ -440,6 +515,12 @@ public class SeedService {
         }
         em.flush();
     }
+
+    private static final String[] RANDOM_CAMPAIGN_PLACEMENTS = {
+        "{\"gates\":[\"1\",\"2\",\"3\",\"4\",\"5\",\"6\",\"7\",\"8\",\"9\",\"10\"]}",
+        "{\"gates\":[\"11\",\"12\",\"13\",\"14\",\"15\",\"16\",\"17\",\"18\",\"19\",\"20\"]}",
+        "{\"gates\":[\"21\",\"22\",\"23\",\"24\",\"25\",\"26\",\"27\",\"28\",\"29\",\"30\"]}"
+    };
 
     private static final String[] OFFERS = {
         "15% off perfume", "Buy 2 get 1 free", "Lounge day pass", "Kids meal deal",

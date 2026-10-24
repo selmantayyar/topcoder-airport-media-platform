@@ -84,7 +84,7 @@ public class ZonePresenceService {
                 .toList();
     }
 
-    ZonePresence compute(Zone zone, List<GateAssignment> assignments, int queueOccupancy, Instant now, int windowMinutes) {
+    public ZonePresence compute(Zone zone, List<GateAssignment> assignments, int queueOccupancy, Instant now, int windowMinutes) {
         Instant windowStart = floorToWindow(now, windowMinutes);
         List<FlightContribution> contributions = new ArrayList<>();
         List<CrowdProfile> profiles = new ArrayList<>();
@@ -122,7 +122,7 @@ public class ZonePresenceService {
      * ramping to full by 40 minutes before departure, full through boarding, then fading to
      * zero by 15 minutes after departure.
      */
-    static double presenceFraction(long minutesToDeparture) {
+    public static double presenceFraction(long minutesToDeparture) {
         long m = minutesToDeparture;
         if (m >= 120 || m < -15) {
             return 0.0;
