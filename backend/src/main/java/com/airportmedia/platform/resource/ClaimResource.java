@@ -28,6 +28,12 @@ public class ClaimResource {
     }
 
     @POST
+    @Path("/{code}/scan")
+    public void scan(@PathParam("code") String code) {
+        claims.scan(code);
+    }
+
+    @POST
     @Path("/{code}/claim")
     public ClaimResult claim(@PathParam("code") String code) {
         return claims.claim(code);

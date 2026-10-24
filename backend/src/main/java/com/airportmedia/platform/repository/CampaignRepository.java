@@ -12,4 +12,8 @@ public class CampaignRepository implements PanacheRepository<Campaign> {
     public List<Campaign> listRunning() {
         return list("status", CampaignStatus.RUNNING);
     }
+
+    public List<Campaign> findByAdvertiser(long advertiserId) {
+        return list("advertiser.id", advertiserId);
+    }
 }

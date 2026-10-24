@@ -17,7 +17,7 @@ The two halves every adapter splits into. A *Source* decides where wire-format b
 _Avoid_: parser, mapper (for Translator); feed, provider (for Source)
 
 **Canonical entity**:
-A domain entity the app core sees, never a source's wire shape. From AODB: Flight, GateAssignment, AircraftType. From AIDX: FlightEvent. From ACRIS: Terminal, Zone, Checkpoint, QueueMeasurement. Platform-owned: Screen, Advertiser, Outlet, Campaign, Creative, PromoCode, Impression, Redemption. Business logic and resources depend only on these.
+A domain entity the app core sees, never a source's wire shape. From AODB: Flight, GateAssignment, AircraftType. From AIDX: FlightEvent. From ACRIS: Terminal, Zone, Checkpoint, QueueMeasurement. Platform-owned: Screen, Advertiser, Outlet, Campaign, Creative, PromoCode, Impression, PromoScan, Redemption, DecisionLog. The retail funnel is Impression (an ad played) → PromoScan (a QR opened the claim page) → Redemption (the offer was claimed). Business logic and resources depend only on these.
 _Avoid_: model, record, DTO
 
 **Should Item**:

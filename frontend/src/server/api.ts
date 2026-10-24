@@ -182,6 +182,71 @@ export const screens = {
 export const promo = {
   info: (code: string) => get<PromoInfo>(`/api/promo/${encodeURIComponent(code)}`),
   claim: (code: string) => post<ClaimResult>(`/api/promo/${encodeURIComponent(code)}/claim`),
+  scan: (code: string) =>
+    fetch(`/api/promo/${encodeURIComponent(code)}/scan`, { method: 'POST' }).catch(() => undefined),
+};
+
+// --- Retailer dashboard (ticket 08) -----------------------------------------
+
+export interface RetailerSummary {
+  id: number;
+  name: string;
+  kind: string;
+  outletCount: number;
+}
+
+export interface CampaignMetric {
+  campaignId: number;
+  name: string;
+  status: string;
+  impressions: number;
+  scans: number;
+  redemptions: number;
+  revenue: number;
+}
+
+export interface DashboardMetrics {
+  advertiserId: number;
+  advertiserName: string;
+  impressions: number;
+  scans: number;
+  redemptions: number;
+  conversionRate: number;
+  attributedRevenue: number;
+  campaigns: CampaignMetric[];
+}
+
+export interface LabelCount {
+  label: string;
+  value: number;
+}
+
+export interface FlowWindow {
+  minutes: number;
+  footfall: number;
+  topDestinations: LabelCount[];
+  topNationalities: LabelCount[];
+}
+
+export interface PassengerFlow {
+  next60: FlowWindow;
+  next120: FlowWindow;
+}
+
+export interface OutletSummary {
+  id: number;
+  name: string;
+  type: string;
+  zoneName: string | null;
+  terminalCode: string | null;
+}
+
+export const retailers = {
+  list: () => get<RetailerSummary[]>('/api/retailers'),
+  outlets: (id: number) => get<OutletSummary[]>(`/api/retailers/${id}/outlets`),
+  metrics: (id: number) => get<DashboardMetrics>(`/api/retailers/${id}/metrics`),
+  flow: (id: number, outletId?: number | null) =>
+    get<PassengerFlow>(`/api/retailers/${id}/flow${outletId ? `?outletId=${outletId}` : ''}`),
 };
 
 // The QR must encode an address a phone on the same LAN can reach — not localhost.

@@ -347,3 +347,55 @@
   min-width: 36px;
   text-align: right;
 }
+
+/* ---- Retailer dashboard (ticket 08) ---- */
+.retail__head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.retail__head h2 { margin: 0; }
+.retail__picker { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--text-muted); }
+.retail__picker select { font: inherit; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border);
+  background: var(--panel); color: var(--text); min-width: 280px; }
+
+/* KPI stat tiles (headline numbers — not a chart; text in ink tokens) */
+.kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin: 16px 0; }
+.stat-tile { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px;
+  display: flex; flex-direction: column; gap: 4px; }
+.stat-tile__value { font-size: 28px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--text); }
+.stat-tile__label { font-size: 12px; text-transform: uppercase; letter-spacing: .5px; color: var(--text-muted); }
+.stat-tile--accent { border-color: color-mix(in srgb, var(--accent) 50%, var(--border)); }
+.stat-tile--accent .stat-tile__value { color: var(--accent); }
+
+.retail__cols { display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px; }
+@media (max-width: 900px) { .retail__cols { grid-template-columns: 1fr; } }
+.retail__panel { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+.retail__panel h3 { margin: 0 0 12px; font-size: 15px; }
+.retail__empty { color: var(--text-muted); font-size: 13px; }
+
+.retail__table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.retail__table th, .retail__table td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--border); }
+.retail__table th { font-size: 11px; text-transform: uppercase; letter-spacing: .4px; color: var(--text-muted); font-weight: 600; }
+.retail__table td.num, .retail__table th:nth-child(n+3) { text-align: right; font-variant-numeric: tabular-nums; }
+.tag { font-size: 10px; text-transform: uppercase; letter-spacing: .4px; padding: 2px 7px; border-radius: 999px;
+  border: 1px solid var(--border); color: var(--text-muted); }
+.tag--running { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 40%, var(--border)); }
+.tag--ended, .tag--rejected { color: var(--text-muted); }
+.tag--pending_approval, .tag--approved, .tag--draft { color: var(--warn); border-color: color-mix(in srgb, var(--warn) 40%, var(--border)); }
+
+.retail__flow-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.retail__flow-head h3 { margin: 0; }
+.retail__window { display: flex; gap: 4px; }
+.retail__window button { font: inherit; font-size: 12px; padding: 4px 10px; border-radius: 6px; border: 1px solid var(--border);
+  background: transparent; color: var(--text-muted); cursor: pointer; }
+.retail__window button.is-active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+.retail__outlet { font: inherit; font-size: 13px; width: 100%; margin-bottom: 12px; padding: 6px 10px;
+  border-radius: 8px; border: 1px solid var(--border); background: var(--panel); color: var(--text); }
+.flow__total { font-size: 14px; color: var(--text-muted); margin: 0 0 14px; }
+.flow__total strong { color: var(--text); font-size: 18px; font-variant-numeric: tabular-nums; }
+.barlist { margin-bottom: 16px; }
+.barlist h4 { margin: 0 0 8px; font-size: 12px; text-transform: uppercase; letter-spacing: .4px; color: var(--text-muted); }
+/* Single-series magnitude: one hue, rounded data-end, value direct-labelled in ink. */
+.barlist__row { display: grid; grid-template-columns: 90px 1fr 56px; gap: 10px; align-items: center; margin-bottom: 5px; }
+.barlist__label { font-size: 13px; color: var(--text); }
+.barlist__track { background: color-mix(in srgb, var(--border) 60%, transparent); border-radius: 5px; height: 10px; }
+.barlist__fill { display: block; height: 100%; background: var(--accent); border-radius: 5px; min-width: 2px; }
+.barlist__value { text-align: right; font-size: 13px; font-variant-numeric: tabular-nums; color: var(--text); }

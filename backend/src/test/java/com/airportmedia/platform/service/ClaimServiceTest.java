@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.airportmedia.platform.common.enums.ClaimStatus;
 import com.airportmedia.platform.domain.model.output.ClaimResult;
+import com.airportmedia.platform.repository.PromoScanRepository;
 import com.airportmedia.platform.repository.RedemptionRepository;
 import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
@@ -34,6 +35,9 @@ class ClaimServiceTest {
 
     @Inject
     RedemptionRepository redemptions;
+
+    @Inject
+    PromoScanRepository scans;
 
     private long redemptionsFor(String code) {
         return redemptions.count("promoCode.code", code);
@@ -77,6 +81,16 @@ class ClaimServiceTest {
         clock.jumpTo(DURING);
 
         assertThatThrownBy(() -> claims.claim("AMP-NOPE")).isInstanceOf(NotFoundException.class);
+    }
+
+    @Test
+    void scanningRecordsAScanForTheFunnel() {
+        clock.jumpTo(DURING);
+        long before = scans.count("promoCode.code", PROMO);
+
+        claims.scan(PROMO);
+
+        assertThat(scans.count("promoCode.code", PROMO)).isEqualTo(before + 1);
     }
 
     @Test

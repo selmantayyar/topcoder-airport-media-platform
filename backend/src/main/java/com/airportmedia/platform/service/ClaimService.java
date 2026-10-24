@@ -5,6 +5,7 @@ import com.airportmedia.platform.common.enums.PartyType;
 import com.airportmedia.platform.domain.entity.Creative;
 import com.airportmedia.platform.domain.entity.Flight;
 import com.airportmedia.platform.domain.entity.PromoCode;
+import com.airportmedia.platform.domain.entity.PromoScan;
 import com.airportmedia.platform.domain.entity.Redemption;
 import com.airportmedia.platform.domain.model.output.ClaimResult;
 import com.airportmedia.platform.domain.model.output.CrowdProfile;
@@ -12,6 +13,7 @@ import com.airportmedia.platform.domain.model.output.PromoInfo;
 import com.airportmedia.platform.domain.model.output.ServerEvent;
 import com.airportmedia.platform.repository.CreativeRepository;
 import com.airportmedia.platform.repository.PromoCodeRepository;
+import com.airportmedia.platform.repository.PromoScanRepository;
 import com.airportmedia.platform.repository.RedemptionRepository;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
@@ -31,6 +33,7 @@ public class ClaimService {
 
     private final PromoCodeRepository promoCodes;
     private final RedemptionRepository redemptions;
+    private final PromoScanRepository scans;
     private final CreativeRepository creatives;
     private final SimulationClock clock;
     private final CrowdProfiler profiler;
@@ -39,12 +42,14 @@ public class ClaimService {
     public ClaimService(
             PromoCodeRepository promoCodes,
             RedemptionRepository redemptions,
+            PromoScanRepository scans,
             CreativeRepository creatives,
             SimulationClock clock,
             CrowdProfiler profiler,
             EventStream stream) {
         this.promoCodes = promoCodes;
         this.redemptions = redemptions;
+        this.scans = scans;
         this.creatives = creatives;
         this.clock = clock;
         this.profiler = profiler;
@@ -62,6 +67,20 @@ public class ClaimService {
                 promo.code, promo.campaign.id, promo.campaign.name,
                 headline(promo, creative), offer(promo, creative), promo.validUntil,
                 promo.redeemed, expired, secondsRemaining);
+    }
+
+    /** Records a QR scan (claim page opened) and broadcasts it, so the retailer funnel updates live. */
+    @Transactional
+    public void scan(String code) {
+        PromoCode promo = require(code);
+        PromoScan scan = new PromoScan();
+        scan.campaign = promo.campaign;
+        scan.promoCode = promo;
+        scan.scannedAt = clock.snapshot().simTime();
+        scans.persist(scan);
+        stream.emitAfterCommit(ServerEvent.of("scan", Map.of(
+                "campaignId", promo.campaign.id,
+                "code", promo.code)));
     }
 
     @Transactional
@@ -85,7 +104,7 @@ public class ClaimService {
         redemptions.persist(redemption);
         promo.redeemed = true;
 
-        stream.emit(ServerEvent.of("redemption", Map.of(
+        stream.emitAfterCommit(ServerEvent.of("redemption", Map.of(
                 "campaignId", promo.campaign.id,
                 "code", promo.code,
                 "segment", segment == null ? "" : segment)));

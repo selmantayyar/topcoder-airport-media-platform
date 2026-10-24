@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { promo, type ClaimResult, type PromoInfo } from '../server/api';
 
@@ -12,10 +12,17 @@ export function ClaimPage() {
   const [result, setResult] = useState<ClaimResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [claiming, setClaiming] = useState(false);
+  const scanned = useRef<string | null>(null);
 
   useEffect(() => {
     document.documentElement.dataset.theme = 'light';
     if (!code) return;
+    // Opening the claim page is a QR scan — record it once for the retailer funnel (the ref guards
+    // against StrictMode's double effect run inflating the scan count).
+    if (scanned.current !== code) {
+      scanned.current = code;
+      promo.scan(code);
+    }
     promo
       .info(code)
       .then(setInfo)
