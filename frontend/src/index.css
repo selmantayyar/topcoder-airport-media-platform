@@ -48,3 +48,120 @@ h1 {
   font-size: 28px;
   margin: 0 0 12px;
 }
+
+/* ---- Passenger screen chooser (ticket 07) ---- */
+.chooser__sub { color: var(--text-muted); max-width: 70ch; margin: 0 0 14px; }
+.chooser__controls { display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 16px; }
+.chooser__controls > input[type='search'] { flex: 1; min-width: 260px; padding: 8px 12px; border-radius: 8px;
+  border: 1px solid var(--border); background: var(--panel); color: var(--text); font: inherit; }
+.chooser__lan { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--text-muted); }
+.chooser__lan input { padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border);
+  background: var(--panel); color: var(--text); font: inherit; min-width: 220px; }
+.chooser__lan-warn { color: var(--warn); font-size: 11px; max-width: 240px; }
+.chooser__error { color: var(--bad); }
+.chooser__grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+.screen-chip { display: flex; flex-direction: column; gap: 3px; padding: 12px 14px; border-radius: 10px;
+  border: 1px solid var(--border); background: var(--panel); color: var(--text); text-decoration: none; }
+.screen-chip:hover { border-color: var(--accent); }
+.screen-chip__code { font-family: var(--mono); font-weight: 700; }
+.screen-chip__zone { font-size: 13px; }
+.screen-chip__meta { font-size: 11px; color: var(--text-muted); }
+.screen-chip__status { font-size: 10px; text-transform: uppercase; letter-spacing: .4px; color: var(--text-muted); }
+.screen-chip--offline { opacity: .55; }
+.screen-chip--offline .screen-chip__status { color: var(--bad); }
+
+/* ---- Full-screen kiosk ---- */
+.kiosk { position: fixed; inset: 0; display: flex; flex-direction: column; background: #0a0e14; color: #f2f6fc;
+  font-family: var(--sans); overflow: hidden; }
+.kiosk--loading, .kiosk--error { align-items: center; justify-content: center; gap: 12px; }
+.kiosk--error a, .kiosk__back { color: #8ab4ff; }
+.kiosk__chrome { display: flex; align-items: center; gap: 12px; padding: 8px 16px; background: #060910;
+  border-bottom: 1px solid #1b2230; font-size: 13px; }
+.kiosk__chrome a { text-decoration: none; }
+.kiosk__id { font-family: var(--mono); color: #9fb0c8; }
+.kiosk__why { margin-left: auto; font: inherit; font-size: 13px; padding: 5px 12px; border-radius: 6px;
+  border: 1px solid #2b3545; background: transparent; color: #cfe0ff; cursor: pointer; }
+.kiosk__why:hover { border-color: #8ab4ff; }
+
+/* FIDS strip */
+.fids { background: #05080e; border-bottom: 1px solid #16202e; padding: 8px 16px; }
+.fids--empty { color: #6d7a8c; font-size: 14px; }
+.fids__title { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #ffb648; }
+.fids__rows { display: flex; gap: 10px; overflow-x: auto; margin-top: 6px; }
+.fids__row { display: grid; grid-template-columns: auto auto auto auto auto; gap: 10px; align-items: baseline;
+  padding: 6px 12px; border-radius: 6px; background: #0e1724; white-space: nowrap; font-family: var(--mono); font-size: 14px; }
+.fids__flight { font-weight: 700; color: #ffd37a; }
+.fids__dest { color: #e7eefb; }
+.fids__gate, .fids__time { color: #9fb0c8; }
+.fids__status { font-size: 11px; letter-spacing: .5px; }
+.fids__row--boarding .fids__status { color: #3fd07a; }
+.fids__row--delayed .fids__status { color: #ff6b6b; }
+.fids__row--departed { opacity: .5; }
+
+/* Ad stage */
+.kiosk__stage { flex: 1; display: flex; gap: 24px; padding: 32px; align-items: stretch; }
+.kiosk--portrait .kiosk__stage { flex-direction: column; }
+.ad { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 18px; padding: 48px;
+  border-radius: 20px; background: linear-gradient(135deg, #16365c, #0b1b30); box-shadow: inset 0 0 120px rgba(0,0,0,.4); }
+.ad--empty { background: linear-gradient(135deg, #1a2436, #0b1120); align-items: center; text-align: center; }
+.ad__brand { font-size: 18px; letter-spacing: 3px; text-transform: uppercase; color: #ffcf6a; }
+.ad__headline { font-size: clamp(32px, 6vw, 76px); line-height: 1.05; margin: 0; color: #fff; }
+.ad__offer { font-size: clamp(20px, 3vw, 36px); font-weight: 700; color: #7fe6a9; margin: 0; }
+.ad__body { font-size: 18px; color: #c6d4ea; margin: 0; max-width: 40ch; }
+
+/* Promo + QR */
+.promo { display: flex; flex-direction: column; align-items: center; gap: 12px; justify-content: center;
+  background: #fff; color: #0a0e14; border-radius: 20px; padding: 24px; min-width: 240px; }
+.promo__meta { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.promo__code { font-family: var(--mono); font-weight: 700; font-size: 18px; }
+.promo__count { font-size: 14px; color: #c05500; font-weight: 700; }
+.promo__hint { font-size: 12px; color: #4a5568; text-transform: uppercase; letter-spacing: 1px; }
+
+/* Why-this-ad overlay */
+.why { position: fixed; inset: 0; background: rgba(2,5,10,.7); display: flex; align-items: center;
+  justify-content: center; z-index: 50; padding: 24px; }
+.why__panel { background: #0f1724; color: #e7eefb; border: 1px solid #243246; border-radius: 16px;
+  padding: 24px; max-width: 760px; width: 100%; max-height: 90vh; overflow: auto; }
+.why__head { display: flex; align-items: center; justify-content: space-between; }
+.why__head h3 { margin: 0; }
+.why__close { background: transparent; border: 0; color: #9fb0c8; font-size: 20px; cursor: pointer; }
+.why__reason { color: #7fe6a9; font-weight: 600; }
+.why__fallback { color: #ffb648; font-size: 13px; }
+.why__rules { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 8px 0; }
+.why__rules-label { font-size: 12px; color: #9fb0c8; margin-right: 2px; }
+.why__rule-chip { font-size: 12px; padding: 3px 9px; border-radius: 999px; background: rgba(88,166,255,.16);
+  border: 1px solid #2f4668; color: #bcd6ff; }
+.why__profile h4, .why__candidates h4 { margin: 18px 0 8px; font-size: 14px; color: #9fb0c8; }
+.why__bars { display: grid; grid-template-columns: 90px 1fr; gap: 6px 10px; margin-bottom: 8px; align-items: center; }
+.why__bars-label { font-size: 12px; color: #9fb0c8; }
+.why__bars-rows { display: flex; flex-direction: column; gap: 3px; }
+.why__bar-row { display: grid; grid-template-columns: 70px 1fr 42px; gap: 8px; align-items: center; font-size: 12px; }
+.why__bar-track { background: #1b2636; border-radius: 4px; height: 8px; overflow: hidden; }
+.why__bar-fill { display: block; height: 100%; background: #58a6ff; }
+.why__bar-pct { text-align: right; font-variant-numeric: tabular-nums; }
+.why__candidates table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.why__candidates th, .why__candidates td { text-align: right; padding: 6px 8px; border-bottom: 1px solid #1b2636; }
+.why__candidates th:first-child, .why__candidates td:first-child { text-align: left; }
+.why__candidates .is-winner { background: rgba(127,230,169,.12); }
+.why__score { font-weight: 700; font-variant-numeric: tabular-nums; }
+
+/* ---- Mobile claim page ---- */
+.claim { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px;
+  background: linear-gradient(160deg, #eef2f9, #dde6f3); }
+.claim__card { background: #fff; border-radius: 18px; box-shadow: 0 18px 50px rgba(20,35,70,.18);
+  padding: 28px 24px; max-width: 420px; width: 100%; text-align: center; }
+.claim__logo { font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: #6b7482; }
+.claim__brand { color: #2563eb; font-weight: 600; margin: 18px 0 4px; }
+.claim__offer { font-size: 30px; margin: 0 0 16px; color: #1c2430; }
+.claim__validity { color: #6b7482; font-size: 14px; }
+.claim__btn { width: 100%; padding: 16px; font: inherit; font-size: 18px; font-weight: 700; border: 0;
+  border-radius: 12px; background: #2563eb; color: #fff; cursor: pointer; }
+.claim__btn:disabled { opacity: .6; }
+.claim__outcome { padding: 20px; border-radius: 12px; display: flex; flex-direction: column; gap: 6px; }
+.claim__outcome strong { font-size: 20px; }
+.claim__outcome--claimed { background: #e8f8ee; color: #15803d; }
+.claim__outcome--already_claimed { background: #fff6e6; color: #b45309; }
+.claim__outcome--expired { background: #fdeaea; color: #b91c1c; }
+.claim__code { font-family: var(--mono); font-weight: 700; letter-spacing: 1px; }
+.claim__msg { color: #6b7482; }
+.claim__msg--bad { color: #dc2626; }

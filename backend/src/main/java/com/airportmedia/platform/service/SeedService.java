@@ -352,6 +352,24 @@ public class SeedService {
             em.persist(screen);
             screens.add(screen);
         }
+
+        // A deterministic, always-online landscape screen at gate 42, so the Gate 42 worked example
+        // is choosable by gate and renders the duty-free decision in the passenger-screen demo.
+        Zone gate42Zone = gateToZone.get("42");
+        if (gate42Zone != null) {
+            Screen screen = new Screen();
+            screen.code = "SCR-GATE42";
+            screen.name = gate42Zone.name + " Gate 42 Screen";
+            screen.zone = gate42Zone;
+            screen.nearestGates = "40,41,42,43,44,45";
+            screen.orientation = ScreenOrientation.LANDSCAPE;
+            screen.widthPx = 1920;
+            screen.heightPx = 1080;
+            screen.status = ScreenStatus.ONLINE;
+            screen.latencyMs = 25;
+            em.persist(screen);
+            screens.add(screen);
+        }
         return screens;
     }
 

@@ -18,4 +18,9 @@ public class GateAssignmentRepository implements PanacheRepository<GateAssignmen
     public List<GateAssignment> listDepartures() {
         return list("flight.direction", FlightDirection.DEPARTURE);
     }
+
+    /** Departures whose gate sits in one zone, for a screen's FIDS strip. */
+    public List<GateAssignment> findDeparturesInZone(long zoneId) {
+        return list("zone.id = ?1 and flight.direction = ?2", zoneId, FlightDirection.DEPARTURE);
+    }
 }

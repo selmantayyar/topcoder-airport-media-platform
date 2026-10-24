@@ -61,7 +61,8 @@ class SeedServiceTest {
 
     @Test
     void platformInventoryIsSeeded() {
-        assertThat(count("Screen")).isEqualTo(20);
+        // 20 random screens (%test config) plus the deterministic gate-42 worked-example screen.
+        assertThat(count("Screen")).isEqualTo(21);
         assertThat(count("Outlet")).isEqualTo(8);
         assertThat(count("Advertiser")).isGreaterThan(0);
         // 6 random campaigns (%test config) plus the 3 Gate 42 worked-example campaigns.
@@ -83,5 +84,11 @@ class SeedServiceTest {
                 "select count(f) from Flight f where f.flightNumber = 'ZQ88' and f.destination = 'MLE'", Long.class)
                 .getSingleResult();
         assertThat(zq88).isEqualTo(1);
+
+        Long gate42Screen = em.createQuery(
+                "select count(s) from Screen s where s.code = 'SCR-GATE42' and s.status = 'ONLINE' "
+                        + "and s.nearestGates like '%42%'", Long.class)
+                .getSingleResult();
+        assertThat(gate42Screen).isEqualTo(1);
     }
 }
