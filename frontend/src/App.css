@@ -472,3 +472,101 @@
 .library__card { border: 1px solid var(--border); border-radius: 10px; padding: 12px; display: flex; flex-direction: column; gap: 4px; }
 .library__offer { color: var(--accent); font-size: 13px; }
 .library__meta { color: var(--text-muted); font-size: 11px; margin-bottom: 6px; }
+
+/* ---- Platform Admin console (ticket 10) ---- */
+.console { display: flex; flex-direction: column; gap: 16px; }
+.console__loading { color: var(--text-muted); }
+.kpi-row--console { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); margin: 0; }
+.stat-tile--alert { border-color: color-mix(in srgb, var(--bad) 50%, var(--border)); }
+.stat-tile--alert .stat-tile__value { color: var(--bad); }
+.console__grid { display: grid; grid-template-columns: minmax(0, 2fr) minmax(300px, 1fr); gap: 16px; align-items: start; }
+@media (max-width: 1100px) { .console__grid { grid-template-columns: 1fr; } }
+.console__panel { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+.console__panel h3 { margin: 0 0 12px; font-size: 15px; }
+.console__tabs { display: flex; gap: 4px; margin-bottom: 12px; flex-wrap: wrap; }
+.console__tabs button { font: inherit; font-size: 13px; padding: 5px 12px; border-radius: 8px; border: 1px solid var(--border);
+  background: transparent; color: var(--text-muted); cursor: pointer; }
+.console__tabs button.is-active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+/* Terminal map: heat is one sequential hue; status dots use the reserved status palette. */
+.tmap { position: relative; }
+.tmap svg { width: 100%; height: auto; display: block; }
+.tmap__terminal { fill: var(--text); font-size: 14px; font-weight: 600; }
+.tmap__zone { stroke: var(--border); stroke-width: 1; }
+.tmap__zone:hover { stroke: var(--accent); }
+.tmap__zone-name { fill: var(--text); font-size: 13px; font-weight: 600; pointer-events: none; }
+.tmap__zone-count { fill: var(--text); font-size: 12px; font-variant-numeric: tabular-nums; pointer-events: none; }
+.tmap__dot { stroke: var(--panel); stroke-width: 2; cursor: pointer; }
+.tmap__dot--online { fill: var(--ok); }
+.tmap__dot--degraded { fill: var(--warn); }
+.tmap__dot--offline { fill: var(--bad); }
+.tmap__tip { position: absolute; pointer-events: none; z-index: 5; display: flex; flex-direction: column; gap: 2px;
+  background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-size: 12px;
+  color: var(--text-muted); box-shadow: 0 6px 20px rgba(0,0,0,.25); min-width: 140px; }
+.tmap__tip strong { color: var(--text); font-size: 13px; }
+.tmap__status { font-weight: 600; }
+.tmap__status--online { color: var(--ok); }
+.tmap__status--degraded { color: var(--warn); }
+.tmap__status--offline { color: var(--bad); }
+.tmap__legend { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; margin-top: 10px; font-size: 12px; color: var(--text-muted); }
+.tmap__key { display: inline-flex; align-items: center; gap: 6px; }
+.tmap__key--heat { gap: 8px; }
+.tmap__ramp { display: inline-block; width: 120px; height: 10px; border-radius: 5px;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--heat) 8%, transparent), color-mix(in srgb, var(--heat) 70%, transparent)); }
+
+/* Incident tracker: severity always carries a text label next to its colour. */
+.incidents h3 { display: flex; align-items: center; gap: 8px; }
+.incidents__count { font-size: 12px; font-weight: 500; color: var(--text-muted); }
+.incidents__empty { color: var(--ok); }
+.incidents ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.incidents > ul:first-of-type { max-height: 640px; overflow-y: auto; padding-right: 4px; }
+.incident { border: 1px solid var(--border); border-left: 4px solid var(--border); border-radius: 8px; padding: 10px 12px;
+  display: flex; flex-direction: column; gap: 4px; }
+.incident--critical { border-left-color: var(--bad); }
+.incident--high { border-left-color: color-mix(in srgb, var(--bad) 70%, var(--warn)); }
+.incident--medium { border-left-color: var(--warn); }
+.incident__head { display: flex; align-items: center; gap: 8px; font-size: 11px; }
+.sev { font-weight: 700; letter-spacing: .4px; padding: 1px 6px; border-radius: 4px; border: 1px solid currentColor; }
+.sev--critical { color: var(--bad); }
+.sev--high { color: color-mix(in srgb, var(--bad) 70%, var(--warn)); }
+.sev--medium { color: var(--warn); }
+.sev--low { color: var(--text-muted); }
+.incident__type { color: var(--text-muted); text-transform: uppercase; letter-spacing: .4px; }
+.incident__age { margin-left: auto; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.incident__title { font-size: 14px; color: var(--text); }
+.incident__detail { font-size: 12px; color: var(--text-muted); }
+.incident__controls { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin-top: 4px; }
+.incident__controls select, .incident__controls button { font: inherit; font-size: 12px; padding: 3px 8px; border-radius: 6px;
+  border: 1px solid var(--border); background: transparent; color: var(--text); cursor: pointer; }
+.incident__controls button:hover { border-color: var(--accent); }
+.istatus { font-size: 11px; color: var(--text-muted); }
+.istatus--acknowledged { color: var(--accent); }
+.incidents h4 { margin: 14px 0 6px; font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .4px; }
+.incidents__resolved li { font-size: 12px; color: var(--text-muted); text-decoration: line-through; text-decoration-color: color-mix(in srgb, var(--text-muted) 50%, transparent); }
+
+/* Generic master-data list + form */
+.mdt { position: relative; }
+.mdt__bar { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; }
+.mdt__bar input { flex: 1; font: inherit; font-size: 13px; padding: 6px 10px; border-radius: 8px; border: 1px solid var(--border);
+  background: var(--bg); color: var(--text); }
+.mdt__count { font-size: 12px; color: var(--text-muted); white-space: nowrap; }
+.mdt__new, .mdt__save { font: inherit; font-size: 13px; font-weight: 600; padding: 6px 12px; border-radius: 8px; border: 0;
+  background: var(--accent); color: #fff; cursor: pointer; }
+.mdt__scroll { max-height: 360px; overflow: auto; border: 1px solid var(--border); border-radius: 8px; }
+.mdt__table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.mdt__table th { position: sticky; top: 0; background: var(--panel); text-align: left; font-size: 11px; text-transform: uppercase;
+  letter-spacing: .4px; color: var(--text-muted); padding: 8px; border-bottom: 1px solid var(--border); }
+.mdt__table td { padding: 6px 8px; border-bottom: 1px solid var(--border); color: var(--text); }
+.mdt__table td.num { text-align: right; font-variant-numeric: tabular-nums; }
+.mdt__table td button { font: inherit; font-size: 12px; padding: 2px 8px; border-radius: 6px; border: 1px solid var(--border);
+  background: transparent; color: var(--text); cursor: pointer; }
+.mdt__drawer { margin-top: 12px; border: 1px solid var(--accent); border-radius: 10px; padding: 14px; background: var(--bg);
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px 14px; }
+.mdt__drawer h4 { grid-column: 1 / -1; margin: 0; font-size: 14px; }
+.mdt__field { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--text-muted); }
+.mdt__field input:not([type='checkbox']), .mdt__field select { font: inherit; font-size: 13px; padding: 6px 9px; border-radius: 8px;
+  border: 1px solid var(--border); background: var(--panel); color: var(--text); }
+.mdt__field input[type='checkbox'] { width: 18px; height: 18px; }
+.mdt__actions { grid-column: 1 / -1; display: flex; gap: 8px; justify-content: flex-end; }
+.mdt__actions button:first-child { font: inherit; font-size: 13px; padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border);
+  background: transparent; color: var(--text); cursor: pointer; }

@@ -37,8 +37,12 @@ async function toApiError(res: Response, path: string): Promise<ApiError> {
 }
 
 async function postJson<T>(path: string, body?: unknown): Promise<T> {
+  return sendJson<T>('POST', path, body);
+}
+
+async function sendJson<T>(method: 'POST' | 'PUT' | 'PATCH', path: string, body?: unknown): Promise<T> {
   const res = await fetch(path, {
-    method: 'POST',
+    method,
     headers: body === undefined ? undefined : { 'Content-Type': 'application/json' },
     body: body === undefined ? undefined : JSON.stringify(body),
   });
@@ -396,4 +400,98 @@ export const campaigns = {
   runAgain: (id: number) => postJson<CampaignHistoryRow>(`/api/campaigns/${id}/run-again`),
   issuePromo: (id: number, flightId: number | null, validMinutes: number) =>
     postJson<PromoIssued>(`/api/campaigns/${id}/promo-codes`, { flightId, validMinutes }),
+};
+
+// --- Platform Admin console (ticket 10) --------------------------------------
+
+export interface AdminKpis {
+  screensOnlinePct: number;
+  screensTotal: number;
+  adPlaysToday: number;
+  audienceImpressionsToday: number;
+  revenueToday: number;
+  currency: string;
+  activeCampaigns: number;
+  averageLatencyMs: number;
+  openIncidents: number;
+}
+
+export interface ScreenDot {
+  id: number;
+  code: string;
+  status: 'ONLINE' | 'DEGRADED' | 'OFFLINE';
+  latencyMs: number;
+  statusSince: string | null;
+}
+
+export interface ZoneMap {
+  id: number;
+  name: string;
+  kind: string;
+  headcount: number;
+  heat: number;
+  screens: ScreenDot[];
+}
+
+export interface TerminalMap {
+  id: number;
+  code: string;
+  name: string;
+  zones: ZoneMap[];
+}
+
+export type IncidentStatus = 'OPEN' | 'ACKNOWLEDGED' | 'RESOLVED';
+
+export interface IncidentView {
+  id: number;
+  type: 'SCREEN_OFFLINE' | 'FEED_LAG' | 'CREATIVE_FAILED';
+  severity: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  owner: string;
+  status: IncidentStatus;
+  title: string;
+  detail: string | null;
+  raisedAt: string;
+  updatedAt: string;
+  resolvedAt: string | null;
+}
+
+export interface AdminOverview {
+  kpis: AdminKpis;
+  terminals: TerminalMap[];
+  incidents: IncidentView[];
+  /** Teams an incident can be assigned to, as published by the backend. */
+  incidentOwners: string[];
+}
+
+export type FieldType = 'TEXT' | 'NUMBER' | 'BOOLEAN' | 'ENUM' | 'REF';
+
+export interface MasterDataField {
+  name: string;
+  label: string;
+  type: FieldType;
+  required: boolean;
+  maxLength: number | null;
+  min: number | null;
+  max: number | null;
+  options: { value: string; label: string }[];
+}
+
+export interface MasterDataSchema {
+  type: string;
+  label: string;
+  fields: MasterDataField[];
+}
+
+export type MasterDataRow = Record<string, unknown> & { id: number };
+
+export const admin = {
+  overview: () => get<AdminOverview>('/api/admin/overview'),
+  updateIncident: (id: number, change: { status?: IncidentStatus; owner?: string }) =>
+    sendJson<IncidentView>('PATCH', `/api/admin/incidents/${id}`, change),
+  schemas: () => get<MasterDataSchema[]>('/api/admin/master'),
+  rows: (type: string) => get<MasterDataRow[]>(`/api/admin/master/${type}`),
+  create: (type: string, values: Record<string, unknown>) =>
+    postJson<MasterDataRow>(`/api/admin/master/${type}`, values),
+  update: (type: string, id: number, values: Record<string, unknown>) =>
+    sendJson<MasterDataRow>('PUT', `/api/admin/master/${type}/${id}`, values),
 };

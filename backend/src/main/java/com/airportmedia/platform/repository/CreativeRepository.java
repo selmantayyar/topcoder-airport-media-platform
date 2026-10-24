@@ -1,8 +1,10 @@
 package com.airportmedia.platform.repository;
 
+import com.airportmedia.platform.common.enums.CampaignStatus;
 import com.airportmedia.platform.domain.entity.Creative;
 import io.quarkus.hibernate.orm.panache.PanacheRepository;
 import jakarta.enterprise.context.ApplicationScoped;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -15,5 +17,11 @@ public class CreativeRepository implements PanacheRepository<Creative> {
 
     public List<Creative> findByAdvertiser(long advertiserId) {
         return list("advertiser.id", advertiserId);
+    }
+
+    /** Creatives of campaigns that can play right now: RUNNING and inside their schedule. */
+    public List<Creative> listForActiveCampaigns(Instant now) {
+        return list("campaign.status = ?1 and campaign.scheduleStart <= ?2 and campaign.scheduleEnd >= ?2",
+                CampaignStatus.RUNNING, now);
     }
 }

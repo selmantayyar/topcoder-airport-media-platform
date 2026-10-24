@@ -83,6 +83,12 @@ function describe(event: ServerEvent): string {
       return `🚪 ${data.flightNumber} moved to gate ${data.newGate}`;
     case 'screen-offline':
       return `🖥 Screen ${data.code} went offline`;
+    case 'redemption':
+      return `🎟 Offer claimed (${data.code})`;
+    case 'scan':
+      return `📱 QR scanned (${data.code})`;
+    case 'incident':
+      return '⚠ Incidents updated';
     default:
       return event.type;
   }

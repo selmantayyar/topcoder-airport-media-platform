@@ -11,6 +11,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import java.time.Instant;
 
 /** Platform-owned: a physical digital screen that plays ads, located in a zone near some gates. */
 @Entity
@@ -45,4 +46,7 @@ public class Screen {
     public ScreenStatus status;
 
     public int latencyMs;
+
+    /** When the screen entered its current status (drives the "offline for more than 5 minutes" incident). */
+    public Instant statusChangedAt;
 }

@@ -109,6 +109,7 @@ public class SimulationService {
                 : screens.firstOnline().orElseThrow(() -> new NotFoundException("No online screen to take offline"));
 
         screen.status = ScreenStatus.OFFLINE;
+        screen.statusChangedAt = clock.snapshot().simTime();
 
         ServerEvent event = ServerEvent.of("screen-offline", Map.of(
                 "screenId", screen.id,

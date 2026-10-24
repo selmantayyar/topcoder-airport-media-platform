@@ -349,6 +349,11 @@ public class SeedService {
             int roll = rng.nextInt(100);
             screen.status = roll < 90 ? ScreenStatus.ONLINE : (roll < 96 ? ScreenStatus.DEGRADED : ScreenStatus.OFFLINE);
             screen.latencyMs = 20 + rng.nextInt(180);
+            // Unhealthy screens have been that way since shortly before the demo window opens, so an
+            // offline screen is already past the 5-minute incident threshold when the console loads.
+            screen.statusChangedAt = screen.status == ScreenStatus.ONLINE
+                    ? DEMO_DAY.atStartOfDay().toInstant(ZoneOffset.UTC)
+                    : DEMO_DAY.atTime(13, 40).toInstant(ZoneOffset.UTC);
             em.persist(screen);
             screens.add(screen);
         }
@@ -367,6 +372,7 @@ public class SeedService {
             screen.heightPx = 1080;
             screen.status = ScreenStatus.ONLINE;
             screen.latencyMs = 25;
+            screen.statusChangedAt = DEMO_DAY.atStartOfDay().toInstant(ZoneOffset.UTC);
             em.persist(screen);
             screens.add(screen);
         }

@@ -17,6 +17,7 @@ html[data-theme='light'] {
   --ok: #16a34a;
   --warn: #d97706;
   --bad: #dc2626;
+  --heat: #ea580c;
   color-scheme: light;
 }
 
@@ -31,6 +32,7 @@ html[data-theme='dark'] {
   --ok: #3fb950;
   --warn: #d29922;
   --bad: #f85149;
+  --heat: #f0883e;
   color-scheme: dark;
 }
 

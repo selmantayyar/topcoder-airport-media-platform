@@ -4,6 +4,7 @@ import { SimControlBar } from './components/SimControlBar';
 import { PresencePanel } from './components/PresencePanel';
 import { ScreenChooser } from './components/ScreenChooser';
 import { RetailerWorkspace } from './components/RetailerWorkspace';
+import { AdminConsole } from './components/AdminConsole';
 import { ServerStreamProvider } from './server/stream';
 import { DEFAULT_ROLE, labelForRole, themeForRole, type RoleId } from './roles';
 import './App.css';
@@ -27,6 +28,8 @@ export default function App() {
             <ScreenChooser />
           ) : role === 'retailer' ? (
             <RetailerWorkspace />
+          ) : role === 'admin' ? (
+            <AdminConsole />
           ) : (
             <>
               <section className="placeholder-panel placeholder-panel--slim">
