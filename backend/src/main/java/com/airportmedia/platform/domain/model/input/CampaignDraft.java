@@ -2,6 +2,7 @@ package com.airportmedia.platform.domain.model.input;
 
 import com.airportmedia.platform.common.enums.Haul;
 import com.airportmedia.platform.common.enums.SpendTier;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -12,11 +13,12 @@ import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.List;
 import java.util.Set;
 
 /**
  * A campaign as the retailer builds it: creative (a library pick via {@code creativeId}, or new copy),
- * placement (gates/zones/screens), audience rules, scoring preferences, schedule and budget. The same
+ * optional translations of that copy, placement (gates/zones/screens), audience rules, scoring preferences, schedule and budget. The same
  * draft drives the live audience-match preview and the save, so what's previewed is what runs.
  */
 public record CampaignDraft(
@@ -27,6 +29,7 @@ public record CampaignDraft(
         @Size(max = 200) String offerText,
         @Size(max = 1000) String body,
         @Size(max = 8) String language,
+        List<@Valid CopyTranslationDraft> translations,
         Set<String> gates,
         Set<Long> zoneIds,
         Set<Long> screenIds,

@@ -38,8 +38,8 @@ public class ScreenResource {
 
     @GET
     @Path("/{id}/playback")
-    public PlaybackView playback(@PathParam("id") long id) {
-        return playback.playback(id);
+    public PlaybackView playback(@PathParam("id") long id, @QueryParam("lang") String lang) {
+        return playback.playback(id, lang);
     }
 
     /** The screen's current decision, side-effect free (the "why this ad?" evidence). */

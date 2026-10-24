@@ -196,6 +196,7 @@ export interface PromoInfo {
   code: string;
   campaignId: number | null;
   campaignName: string;
+  advertiserName: string;
   headline: string;
   offerText: string;
   validUntil: string;
@@ -224,12 +225,14 @@ export const screens = {
     const query = params.toString();
     return get<ScreenSummary[]>(`/api/screens${query ? `?${query}` : ''}`);
   },
-  playback: (id: number) => get<PlaybackView>(`/api/screens/${id}/playback`),
+  /** The ad's copy comes back in `lang` when the creative has it, else in its own language. */
+  playback: (id: number, lang: string) => get<PlaybackView>(`/api/screens/${id}/playback?lang=${lang}`),
 };
 
 export const promo = {
-  info: (code: string) => get<PromoInfo>(`/api/promo/${encodeURIComponent(code)}`),
-  claim: (code: string) => post<ClaimResult>(`/api/promo/${encodeURIComponent(code)}/claim`),
+  info: (code: string, lang: string) => get<PromoInfo>(`/api/promo/${encodeURIComponent(code)}?lang=${lang}`),
+  claim: (code: string, lang: string) =>
+    post<ClaimResult>(`/api/promo/${encodeURIComponent(code)}/claim?lang=${lang}`),
   scan: (code: string) =>
     fetch(`/api/promo/${encodeURIComponent(code)}/scan`, { method: 'POST' }).catch(() => undefined),
   share: (code: string) => postJson<PromoIssued>(`/api/promo/${encodeURIComponent(code)}/share`),
@@ -346,6 +349,8 @@ export interface CampaignDraft {
   offerText: string | null;
   body: string | null;
   language: string | null;
+  /** The retailer's own copy in other languages (e.g. Spanish next to English). */
+  translations: CopyTranslation[] | null;
   gates: string[];
   zoneIds: number[];
   screenIds: number[];
@@ -363,6 +368,13 @@ export interface CampaignDraft {
   budget: number;
   dailyCap: number | null;
   frequencyCapPerScreen: number;
+}
+
+export interface CopyTranslation {
+  language: string;
+  headline: string;
+  offerText: string | null;
+  body: string | null;
 }
 
 export interface AudienceMatch {
@@ -397,6 +409,8 @@ export interface CreativeSummary {
   body: string | null;
   language: string;
   templateKey: string;
+  /** Every language the creative renders in, its own first. */
+  languages: string[];
 }
 
 export interface AdPage {
@@ -582,7 +596,8 @@ export interface ApprovalItem {
   budget: number;
   headline: string | null;
   offerText: string | null;
-  language: string | null;
+  /** Every language the creative renders in, its own first. */
+  languages: string[];
   creativeProblems: string[];
 }
 

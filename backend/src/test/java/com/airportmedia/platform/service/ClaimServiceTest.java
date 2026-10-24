@@ -144,4 +144,14 @@ class ClaimServiceTest {
 
         assertThatThrownBy(() -> claims.share(PROMO)).isInstanceOf(WebApplicationException.class);
     }
+
+    @Test
+    void theClaimPageShowsTheOfferInTheRequestedLanguage() {
+        clock.jumpTo(DURING);
+
+        assertThat(claims.info(PROMO, "es").offerText()).isEqualTo("15% de descuento en perfumes");
+        assertThat(claims.info(PROMO, "en").offerText()).isEqualTo("15% off perfume");
+        assertThat(claims.info(PROMO, "es").advertiserName()).isEqualTo("Azure Duty-Free");
+        assertThat(claims.claim(PROMO, "es").offerText()).isEqualTo("15% de descuento en perfumes");
+    }
 }

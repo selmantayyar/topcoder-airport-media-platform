@@ -1,4 +1,6 @@
 import { useState, type MouseEvent } from 'react';
+import { num } from '../format';
+import { useI18n } from '../i18n/I18nProvider';
 import type { ScreenDot, TerminalMap as Terminal, ZoneMap } from '../server/api';
 
 const WIDTH = 1000;
@@ -9,7 +11,7 @@ const HEADER = 26;
 const DOT_R = 5;
 const DOT_STEP = 16;
 
-const STATUS_LABEL: Record<ScreenDot['status'], string> = { ONLINE: 'Online', DEGRADED: 'Degraded', OFFLINE: 'Offline' };
+const STATUSES: ScreenDot['status'][] = ['ONLINE', 'DEGRADED', 'OFFLINE'];
 
 type HoverTarget = { kind: 'zone'; zone: ZoneMap } | { kind: 'screen'; screen: ScreenDot; zone: ZoneMap };
 type Hover = HoverTarget & { x: number; y: number };
@@ -20,6 +22,7 @@ type Hover = HoverTarget & { x: number; y: number };
  * palette. Status and heat are never colour-only — the legend names them and hovering shows the values.
  */
 export function TerminalMap({ terminals }: { terminals: Terminal[] }) {
+  const { t, label } = useI18n();
   const [hover, setHover] = useState<Hover | null>(null);
   const layouts = layout(terminals);
   const height = layouts.reduce((h, t) => Math.max(h, t.bottom), 0) + 4;
@@ -32,11 +35,11 @@ export function TerminalMap({ terminals }: { terminals: Terminal[] }) {
 
   return (
     <div className="tmap">
-      <svg viewBox={`0 0 ${WIDTH} ${height}`} role="img" aria-label="Terminal floor plan with screen status and passenger heat">
-        {layouts.map((t) => (
-          <g key={t.terminal.id}>
-            <text x={0} y={t.top + 16} className="tmap__terminal">{t.terminal.name}</text>
-            {t.zones.map((z) => (
+      <svg viewBox={`0 0 ${WIDTH} ${height}`} role="img" aria-label={t('map.aria')}>
+        {layouts.map((box) => (
+          <g key={box.terminal.id}>
+            <text x={0} y={box.top + 16} className="tmap__terminal">{box.terminal.name}</text>
+            {box.zones.map((z) => (
               <g key={z.zone.id}>
                 <rect
                   x={z.x} y={z.y} width={z.w} height={z.h} rx={8}
@@ -47,7 +50,7 @@ export function TerminalMap({ terminals }: { terminals: Terminal[] }) {
                 />
                 <text x={z.x + 10} y={z.y + 18} className="tmap__zone-name">{z.zone.name}</text>
                 <text x={z.x + z.w - 10} y={z.y + 18} className="tmap__zone-count" textAnchor="end">
-                  {z.zone.headcount.toLocaleString()} pax
+                  {t('common.pax', { n: num(z.zone.headcount) })}
                 </text>
                 {z.zone.screens.map((s, i) => {
                   const perRow = Math.max(1, Math.floor((z.w - 20) / DOT_STEP));
@@ -74,33 +77,33 @@ export function TerminalMap({ terminals }: { terminals: Terminal[] }) {
           {hover.kind === 'zone' ? (
             <>
               <strong>{hover.zone.name}</strong>
-              <span>{hover.zone.headcount.toLocaleString()} passengers now</span>
-              <span>{hover.zone.screens.length} screens · {count(hover.zone, 'OFFLINE')} offline</span>
+              <span>{t('map.paxNow', { n: num(hover.zone.headcount) })}</span>
+              <span>{t('map.screens', { n: hover.zone.screens.length, offline: count(hover.zone, 'OFFLINE') })}</span>
             </>
           ) : (
             <>
               <strong>{hover.screen.code}</strong>
               <span className={`tmap__status tmap__status--${hover.screen.status.toLowerCase()}`}>
-                {STATUS_LABEL[hover.screen.status]}
+                {label('screenStatus', hover.screen.status)}
               </span>
-              <span>{hover.screen.latencyMs} ms latency</span>
+              <span>{t('map.latency', { n: hover.screen.latencyMs })}</span>
               <span>{hover.zone.name}</span>
             </>
           )}
         </div>
       )}
 
-      <div className="tmap__legend" aria-label="Legend">
-        {(Object.keys(STATUS_LABEL) as ScreenDot['status'][]).map((s) => (
+      <div className="tmap__legend" aria-label={t('map.legend')}>
+        {STATUSES.map((s) => (
           <span key={s} className="tmap__key">
             <svg width="12" height="12" aria-hidden><circle cx="6" cy="6" r="5" className={`tmap__dot tmap__dot--${s.toLowerCase()}`} /></svg>
-            {STATUS_LABEL[s]}
+            {label('screenStatus', s)}
           </span>
         ))}
         <span className="tmap__key tmap__key--heat">
-          Passengers: quiet
+          {t('map.quiet')}
           <span className="tmap__ramp" aria-hidden />
-          busiest
+          {t('map.busiest')}
         </span>
       </div>
     </div>

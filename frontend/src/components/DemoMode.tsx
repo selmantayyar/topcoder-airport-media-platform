@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { screens, type ScreenSummary } from '../server/api';
-import { labelForRole, type RoleId } from '../roles';
+import { useI18n } from '../i18n/I18nProvider';
+import type { RoleId } from '../roles';
 import { PassengerScreenView } from './PassengerScreen';
 import { RoleDashboard } from './RoleDashboard';
 
@@ -19,6 +20,7 @@ interface Props {
  * SSE connection and the shared control bar, so they move off the same server clock and the same events.
  */
 export function DemoMode({ role, screenId, onScreenChange }: Props) {
+  const { t } = useI18n();
   const [screenList, setScreenList] = useState<ScreenSummary[]>([]);
 
   useEffect(() => {
@@ -33,17 +35,17 @@ export function DemoMode({ role, screenId, onScreenChange }: Props) {
 
   return (
     <div className="demo">
-      <section className="demo__pane demo__pane--screen" aria-label="Passenger screen">
+      <section className="demo__pane demo__pane--screen" aria-label={t('demo.screenPane')}>
         <header className="demo__head">
-          <h2>Passenger Screen</h2>
+          <h2>{t('role.passenger')}</h2>
           <select
             value={screenId ?? ''}
             onChange={(e) => onScreenChange(Number(e.target.value))}
-            aria-label="Screen shown in the demo"
+            aria-label={t('demo.screenSelect')}
           >
             {screenList.map((s) => (
               <option key={s.id} value={s.id}>
-                {s.code} · {s.zoneName ?? '—'}{s.nearestGates ? ` · gates ${s.nearestGates}` : ''}
+                {s.code} · {s.zoneName ?? '—'}{s.nearestGates ? ` · ${t('common.gates', { gates: s.nearestGates })}` : ''}
               </option>
             ))}
           </select>
@@ -51,10 +53,10 @@ export function DemoMode({ role, screenId, onScreenChange }: Props) {
         <div className="demo__screen">
           {screenId != null && <PassengerScreenView key={screenId} screenId={screenId} embedded />}
         </div>
-        <p className="demo__hint">Control-bar injections target this screen.</p>
+        <p className="demo__hint">{t('demo.hint')}</p>
       </section>
 
-      <section className="demo__pane demo__pane--role" aria-label={labelForRole(role)}>
+      <section className="demo__pane demo__pane--role" aria-label={t(`role.${role}`)}>
         <RoleDashboard role={role} />
       </section>
     </div>

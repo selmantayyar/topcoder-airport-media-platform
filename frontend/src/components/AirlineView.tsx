@@ -10,12 +10,9 @@ import {
 import { isInjectedEvent } from '../server/events';
 import { useServerEvents, type ServerEvent } from '../server/stream';
 import { hhmm } from '../format';
+import { useI18n } from '../i18n/I18nProvider';
 
-const CONTENT_TYPES: { value: SponsoredContentType; label: string }[] = [
-  { value: 'UPGRADE_OFFER', label: 'Upgrade offer' },
-  { value: 'LOUNGE_PASS', label: 'Lounge pass' },
-  { value: 'DESTINATION_PARTNER', label: 'Destination partner' },
-];
+const CONTENT_TYPES: SponsoredContentType[] = ['UPGRADE_OFFER', 'LOUNGE_PASS', 'DESTINATION_PARTNER'];
 
 /**
  * Airline Representative (a Peripheral Role: plain but fully functional): today's departures for the chosen
@@ -23,6 +20,7 @@ const CONTENT_TYPES: { value: SponsoredContentType; label: string }[] = [
  * schedule sponsored content for a flight's boarding window.
  */
 export function AirlineView() {
+  const { t, label } = useI18n();
   const [companies, setCompanies] = useState<AirlineSummary[]>([]);
   const [airlineId, setAirlineId] = useState<number | null>(null);
   const [flights, setFlights] = useState<AirlineFlightRow[]>([]);
@@ -58,19 +56,19 @@ export function AirlineView() {
   return (
     <section className="mm">
       <header className="retail__head">
-        <h2>Airline Representative</h2>
+        <h2>{t('role.airline')}</h2>
         <label className="retail__picker">
-          <span>Airline</span>
+          <span>{t('airline.airline')}</span>
           <select
             value={airlineId ?? ''}
             onChange={(e) => {
               setNotice(null);
               setAirlineId(Number(e.target.value));
             }}
-            aria-label="Select airline"
+            aria-label={t('airline.select')}
           >
             {companies.map((a) => (
-              <option key={a.id} value={a.id}>{a.name} ({a.iataCode}{a.lowCost ? ' · low-cost' : ''})</option>
+              <option key={a.id} value={a.id}>{a.name} ({a.iataCode}{a.lowCost ? ` · ${t('airline.lowCost')}` : ''})</option>
             ))}
           </select>
         </label>
@@ -83,7 +81,7 @@ export function AirlineView() {
           airlineId={airlineId}
           flights={flights.filter((f) => f.minutesToDeparture > 0)}
           onScheduled={(row) => {
-            setNotice(`Scheduled “${row.name}” on gate ${row.gate}, ${hhmm(row.scheduleStart)}–${hhmm(row.scheduleEnd)} UTC — live now, with airline priority while the flight boards.`);
+            setNotice(t('airline.scheduled', { name: row.name, gate: row.gate ?? '?', start: hhmm(row.scheduleStart), end: hhmm(row.scheduleEnd) }));
             load();
           }}
           onError={setNotice}
@@ -91,10 +89,13 @@ export function AirlineView() {
       )}
 
       <div className="retail__panel">
-        <h3>My flights today</h3>
+        <h3>{t('airline.myFlights')}</h3>
         <table className="retail__table">
           <thead>
-            <tr><th>Flight</th><th>To</th><th>Gate</th><th>Scheduled</th><th>Departs</th><th>Status</th><th>Delay</th><th>Load factor</th></tr>
+            <tr>
+              <th>{t('common.flight')}</th><th>{t('airline.to')}</th><th>{t('common.gate')}</th><th>{t('airline.scheduledCol')}</th>
+              <th>{t('airline.departs')}</th><th>{t('common.status')}</th><th className="num">{t('airline.delay')}</th><th className="num">{t('airline.load')}</th>
+            </tr>
           </thead>
           <tbody>
             {flights.map((f) => (
@@ -104,7 +105,7 @@ export function AirlineView() {
                 <td>{f.gate ?? '—'}</td>
                 <td>{hhmm(f.scheduledTime)}</td>
                 <td>{hhmm(f.departureTime)}</td>
-                <td><span className={`airline__status airline__status--${f.status.toLowerCase().replace(' ', '-')}`}>{f.status}</span></td>
+                <td><span className={`airline__status airline__status--${f.status.toLowerCase().replace(' ', '-')}`}>{label('flightStatus', f.status)}</span></td>
                 <td className="num">{f.delayMinutes > 0 ? `+${f.delayMinutes}m` : '—'}</td>
                 <td className="num">
                   <span className="airline__load"><span style={{ width: `${Math.min(100, f.loadFactorPct)}%` }} /></span>
@@ -112,31 +113,34 @@ export function AirlineView() {
                 </td>
               </tr>
             ))}
-            {flights.length === 0 && <tr><td colSpan={8} className="retail__empty">No departures today.</td></tr>}
+            {flights.length === 0 && <tr><td colSpan={8} className="retail__empty">{t('airline.noFlights')}</td></tr>}
           </tbody>
         </table>
       </div>
 
       <div className="retail__panel">
-        <h3>My gate content</h3>
+        <h3>{t('airline.myContent')}</h3>
         <table className="retail__table">
           <thead>
-            <tr><th>Campaign</th><th>Type</th><th>Flight</th><th>Gate</th><th>Window (UTC)</th><th>Status</th><th>Co-funded by</th><th>Creative</th></tr>
+            <tr>
+              <th>{t('common.campaign')}</th><th>{t('airline.type')}</th><th>{t('common.flight')}</th><th>{t('common.gate')}</th>
+              <th>{t('airline.window')}</th><th>{t('common.status')}</th><th>{t('airline.coFunded')}</th><th>{t('common.creative')}</th>
+            </tr>
           </thead>
           <tbody>
             {content.map((c) => (
               <tr key={c.campaignId}>
                 <td>{c.name}</td>
-                <td>{c.purpose === 'GOODWILL' ? <span className="tag tag--pending_approval">Delay voucher (auto)</span> : <span className="tag">Sponsored</span>}</td>
+                <td>{c.purpose === 'GOODWILL' ? <span className="tag tag--pending_approval">{t('airline.voucher')}</span> : <span className="tag">{t('airline.sponsored')}</span>}</td>
                 <td>{c.flightNumber ?? '—'}</td>
                 <td>{c.gate ?? '—'}</td>
                 <td className="history__dates">{hhmm(c.scheduleStart)}–{hhmm(c.scheduleEnd)}</td>
-                <td><span className={`tag tag--${c.status.toLowerCase()}`}>{c.status}</span></td>
+                <td><span className={`tag tag--${c.status.toLowerCase()}`}>{label('campaignStatus', c.status)}</span></td>
                 <td>{c.coFunderName ?? '—'}</td>
                 <td>{c.headline}{c.offerText ? ` · ${c.offerText}` : ''}</td>
               </tr>
             ))}
-            {content.length === 0 && <tr><td colSpan={8} className="retail__empty">Nothing scheduled yet.</td></tr>}
+            {content.length === 0 && <tr><td colSpan={8} className="retail__empty">{t('airline.nothing')}</td></tr>}
           </tbody>
         </table>
       </div>
@@ -155,6 +159,7 @@ function ScheduleForm({
   onScheduled: (row: AirlineContentRow) => void;
   onError: (message: string) => void;
 }) {
+  const { t } = useI18n();
   const [flightId, setFlightId] = useState<number | null>(null);
   const [type, setType] = useState<SponsoredContentType>('UPGRADE_OFFER');
   const [headline, setHeadline] = useState('');
@@ -170,31 +175,31 @@ function ScheduleForm({
         setOfferText('');
         onScheduled(row);
       })
-      .catch((e: unknown) => onError(errorMessage(e, 'Could not schedule content')));
+      .catch((e: unknown) => onError(errorMessage(e, t('airline.scheduleFailed'))));
   };
 
   return (
     <div className="retail__panel">
-      <h3>Schedule sponsored content</h3>
-      <p className="builder__hint">Plays on the flight's gate screens during its boarding window (40 minutes before departure), boosted by airline priority.</p>
+      <h3>{t('airline.scheduleTitle')}</h3>
+      <p className="builder__hint">{t('airline.scheduleHint')}</p>
       <div className="airline__form">
-        <label>Flight
+        <label>{t('common.flight')}
           <select value={chosen ?? ''} onChange={(e) => setFlightId(Number(e.target.value))}>
             {flights.map((f) => (
               <option key={f.flightId} value={f.flightId}>
-                {f.flightNumber} → {f.destination} · gate {f.gate ?? '?'} · {hhmm(f.departureTime)}
+                {t('airline.flightOption', { flight: f.flightNumber, dest: f.destination, gate: f.gate ?? '?', time: hhmm(f.departureTime) })}
               </option>
             ))}
           </select>
         </label>
-        <label>Content
+        <label>{t('airline.contentField')}
           <select value={type} onChange={(e) => setType(e.target.value as SponsoredContentType)}>
-            {CONTENT_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+            {CONTENT_TYPES.map((c) => <option key={c} value={c}>{t(`airline.content.${c}`)}</option>)}
           </select>
         </label>
-        <label>Headline (optional)<input value={headline} maxLength={60} onChange={(e) => setHeadline(e.target.value)} placeholder="Generated from the flight" /></label>
-        <label>Offer (optional)<input value={offerText} maxLength={80} onChange={(e) => setOfferText(e.target.value)} placeholder="Generated from the type" /></label>
-        <button type="button" className="builder__save" onClick={submit} disabled={chosen == null}>Schedule</button>
+        <label>{t('airline.headlineOpt')}<input value={headline} maxLength={60} onChange={(e) => setHeadline(e.target.value)} placeholder={t('airline.headlinePh')} /></label>
+        <label>{t('airline.offerOpt')}<input value={offerText} maxLength={80} onChange={(e) => setOfferText(e.target.value)} placeholder={t('airline.offerPh')} /></label>
+        <button type="button" className="builder__save" onClick={submit} disabled={chosen == null}>{t('airline.schedule')}</button>
       </div>
     </div>
   );

@@ -1,5 +1,9 @@
+import { BRAND } from '../brand';
+import { hhmmss } from '../format';
+import { LanguageSwitch, useI18n } from '../i18n/I18nProvider';
 import { ROLES, type RoleId } from '../roles';
-import { useClock, type StreamStatus } from '../server/stream';
+import { useClock } from '../server/stream';
+import { BrandLogo } from './BrandLogo';
 
 interface AppHeaderProps {
   activeRole: RoleId;
@@ -9,22 +13,20 @@ interface AppHeaderProps {
   onDemoChange: (demo: boolean) => void;
 }
 
-const STATUS_LABEL: Record<StreamStatus, string> = {
-  connecting: 'Connecting…',
-  live: 'Live',
-  error: 'Disconnected',
-};
-
 export function AppHeader({ activeRole, onRoleChange, demo, onDemoChange }: AppHeaderProps) {
   const { clock, status } = useClock();
+  const { t } = useI18n();
 
-  const simTime = clock ? new Date(clock.simTime).toLocaleTimeString('en-GB', { timeZone: 'UTC' }) : '--:--:--';
+  const simTime = clock ? hhmmss(clock.simTime) : '--:--:--';
 
   return (
     <header className="app-header">
-      <div className="app-header__brand">Airport Media Platform</div>
+      <div className="app-header__brand">
+        <BrandLogo />
+        <span>{BRAND.productName}</span>
+      </div>
 
-      <nav className="role-switcher" aria-label="Role">
+      <nav className="role-switcher" aria-label={t('header.roles')}>
         {ROLES.filter((role) => !demo || role.id !== 'passenger').map((role) => (
           <button
             key={role.id}
@@ -33,7 +35,7 @@ export function AppHeader({ activeRole, onRoleChange, demo, onDemoChange }: AppH
             aria-pressed={role.id === activeRole}
             onClick={() => onRoleChange(role.id)}
           >
-            {role.label}
+            {t(`role.${role.id}`)}
           </button>
         ))}
       </nav>
@@ -44,14 +46,16 @@ export function AppHeader({ activeRole, onRoleChange, demo, onDemoChange }: AppH
         aria-pressed={demo}
         onClick={() => onDemoChange(!demo)}
       >
-        {demo ? 'Exit split-screen' : 'Split-screen demo'}
+        {demo ? t('header.demoOff') : t('header.demoOn')}
       </button>
+
+      <LanguageSwitch />
 
       <div className={`live-clock live-clock--${status}`} aria-live="polite">
         <span className="live-clock__dot" />
-        <span className="live-clock__status">{STATUS_LABEL[status]}</span>
+        <span className="live-clock__status">{t(`stream.${status}`)}</span>
         <span className="live-clock__value">{simTime}</span>
-        {clock && <span className="live-clock__speed">{clock.running ? `${clock.speed}x` : 'paused'}</span>}
+        {clock && <span className="live-clock__speed">{clock.running ? `${clock.speed}x` : t('clock.paused')}</span>}
       </div>
     </header>
   );

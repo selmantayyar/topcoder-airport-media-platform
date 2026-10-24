@@ -64,8 +64,8 @@ public class CreativeAssistantService {
                 List<AdPage> pages = QuarkusTransaction.joiningExisting().call(() -> {
                     Advertiser advertiser = advertisers.findById(advertiserId);
                     return List.of(
-                            save(advertiser, facts, "en", attempt.copy().en()),
-                            save(advertiser, facts, "es", attempt.copy().es()));
+                            save(advertiser, facts, "en", attempt.copy().en(), "es", attempt.copy().es()),
+                            save(advertiser, facts, "es", attempt.copy().es(), "en", attempt.copy().en()));
                 });
                 return new GeneratedCreative(brief, assistant.name(), pages, List.copyOf(notes));
             }
@@ -96,7 +96,9 @@ public class CreativeAssistantService {
         return new Attempt(copy, problems);
     }
 
-    private AdPage save(Advertiser advertiser, BriefFacts facts, String language, AdCopy copy) {
+    /** One library page per language; each carries the other as its translation, so either renders both. */
+    private AdPage save(Advertiser advertiser, BriefFacts facts, String language, AdCopy copy,
+            String otherLanguage, AdCopy other) {
         Creative c = new Creative();
         c.advertiser = advertiser;
         String name = "Assistant: " + facts.product() + " (" + language.toUpperCase() + ")";
@@ -106,6 +108,7 @@ public class CreativeAssistantService {
         c.headline = copy.headline();
         c.offerText = copy.offerText();
         c.body = copy.body();
+        c.translate(otherLanguage, other.headline(), other.offerText(), other.body());
         creatives.persist(c);
         return new AdPage(c.id, language, TEMPLATE, c.headline, c.offerText, c.body);
     }

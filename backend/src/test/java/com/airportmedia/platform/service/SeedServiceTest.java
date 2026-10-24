@@ -6,6 +6,7 @@ import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
+import com.airportmedia.platform.domain.entity.Creative;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -90,5 +91,17 @@ class SeedServiceTest {
                         + "and s.nearestGates like '%42%'", Long.class)
                 .getSingleResult();
         assertThat(gate42Screen).isEqualTo(1);
+    }
+
+    @Test
+    void everySeededCreativeRendersInEnglishAndSpanish() {
+        var creatives = em.createQuery("from Creative", Creative.class).getResultList();
+
+        assertThat(creatives).isNotEmpty().allSatisfy(c -> {
+            assertThat(c.copyIn("en").language()).isEqualTo("en");
+            assertThat(c.copyIn("es").language()).isEqualTo("es");
+            assertThat(c.copyIn("es").headline()).isNotEqualTo(c.copyIn("en").headline());
+            assertThat(c.copyIn("es").body()).isNotEqualTo(c.copyIn("en").body());
+        });
     }
 }

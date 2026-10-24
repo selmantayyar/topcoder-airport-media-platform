@@ -9,6 +9,7 @@ import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 
 /** The LAN-served promo claim flow a passenger's phone hits after scanning the QR. */
@@ -24,8 +25,8 @@ public class ClaimResource {
 
     @GET
     @Path("/{code}")
-    public PromoInfo info(@PathParam("code") String code) {
-        return claims.info(code);
+    public PromoInfo info(@PathParam("code") String code, @QueryParam("lang") String lang) {
+        return claims.info(code, lang);
     }
 
     @POST
@@ -36,8 +37,8 @@ public class ClaimResource {
 
     @POST
     @Path("/{code}/claim")
-    public ClaimResult claim(@PathParam("code") String code) {
-        return claims.claim(code);
+    public ClaimResult claim(@PathParam("code") String code, @QueryParam("lang") String lang) {
+        return claims.claim(code, lang);
     }
 
     @POST

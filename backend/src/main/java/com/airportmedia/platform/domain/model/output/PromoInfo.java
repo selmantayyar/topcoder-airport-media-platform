@@ -7,6 +7,7 @@ public record PromoInfo(
         String code,
         Long campaignId,
         String campaignName,
+        String advertiserName,
         String headline,
         String offerText,
         Instant validUntil,

@@ -113,7 +113,7 @@ public class IncidentMonitor {
     }
 
     private static CreativeFact qa(Creative c) {
-        return new CreativeFact(c.id, c.campaign.name, CreativeQa.problems(c.headline, c.offerText, c.body, c.language));
+        return new CreativeFact(c.id, c.campaign.name, CreativeQa.problems(c));
     }
 
     private static Incident newIncident(DesiredIncident d, Instant now) {

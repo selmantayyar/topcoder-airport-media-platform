@@ -18,9 +18,17 @@
 }
 
 .app-header__brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-weight: 700;
   letter-spacing: 0.2px;
   white-space: nowrap;
+}
+
+.app-header__brand .brand-logo {
+  color: var(--accent);
+  flex: none;
 }
 
 /* Role switcher */
@@ -373,7 +381,7 @@
 .retail__table { width: 100%; border-collapse: collapse; font-size: 13px; }
 .retail__table th, .retail__table td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--border); }
 .retail__table th { font-size: 11px; text-transform: uppercase; letter-spacing: .4px; color: var(--text-muted); font-weight: 600; }
-.retail__table td.num, .retail__table th:nth-child(n+3) { text-align: right; font-variant-numeric: tabular-nums; }
+.retail__table td.num, .retail__table th.num { text-align: right; font-variant-numeric: tabular-nums; }
 .tag { font-size: 10px; text-transform: uppercase; letter-spacing: .4px; padding: 2px 7px; border-radius: 999px;
   border: 1px solid var(--border); color: var(--text-muted); }
 .tag--running { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 40%, var(--border)); }
@@ -673,3 +681,23 @@
 .kiosk--embedded .fids__rows { flex-wrap: wrap; overflow: visible; gap: 6px; }
 .kiosk--embedded .fids__row { font-size: 11px; padding: 3px 7px; gap: 7px; }
 .kiosk--portrait.kiosk--embedded .kiosk__stage { flex-direction: row; }
+
+/* ---- Language switch (ticket 15) ---- */
+.lang-switch { display: inline-flex; border: 1px solid var(--border, #e3e6ec); border-radius: 6px; overflow: hidden; flex: none; }
+.lang-switch__btn { font: inherit; font-size: 12px; font-weight: 600; letter-spacing: .5px; padding: 5px 9px; border: 0;
+  background: transparent; color: var(--text-muted, #6b7482); cursor: pointer; }
+.lang-switch__btn + .lang-switch__btn { border-left: 1px solid var(--border, #e3e6ec); }
+.lang-switch__btn.is-active { background: var(--accent, #2563eb); color: #fff; }
+
+.mm__langs { font-size: 11px; color: var(--text-muted); letter-spacing: .4px; }
+
+/* ---- Builder: second-language copy ---- */
+.builder__translation { display: flex; flex-direction: column; gap: 8px; margin-top: 6px; padding: 10px 12px;
+  border: 1px dashed var(--border); border-radius: 8px; }
+.builder__subhead { font-size: 13px; font-weight: 600; }
+
+/* ---- Responsive: dashboards are laid out for 1440px and 1920px; Spanish strings run ~20% longer. ---- */
+@media (max-width: 1600px) {
+  .app-header { gap: 12px; padding: 10px 16px; }
+  .role-switcher__btn { padding: 5px 9px; font-size: 14px; }
+}

@@ -22,7 +22,7 @@ class TargetingJsonTest {
     @Test
     void writtenColumnsParseBackToTheSameTargeting() {
         CampaignDraft draft = new CampaignDraft(
-                1L, "Spring sale", null, "20% off", "20% off", null, "en",
+                1L, "Spring sale", null, "20% off", "20% off", null, "en", null,
                 Set.of("42", "43"), Set.of(5L), Set.of(9L), Set.of("DXB"), Haul.INTERNATIONAL,
                 20, 30, 150, 0.2, 0.7, 0.4, SpendTier.HIGH,
                 Instant.parse("2026-10-23T00:00:00Z"), Instant.parse("2026-10-30T00:00:00Z"),
@@ -39,7 +39,7 @@ class TargetingJsonTest {
     @Test
     void emptyDraftTargetingIsUnrestricted() {
         CampaignDraft draft = new CampaignDraft(
-                1L, "Anywhere", null, "Hi", null, null, null,
+                1L, "Anywhere", null, "Hi", null, null, null, null,
                 null, null, null, null, null, 0, 0, 0, 0, 0, 0, null,
                 Instant.parse("2026-10-23T00:00:00Z"), Instant.parse("2026-10-24T00:00:00Z"),
                 BigDecimal.TEN, null, 3);

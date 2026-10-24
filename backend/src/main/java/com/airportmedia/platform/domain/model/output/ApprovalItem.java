@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 
-/** A campaign awaiting the Media Manager's approval, with its creative and any QA problems in it. */
+/** A campaign awaiting the Media Manager's approval, with its creative, the languages it renders in, and any QA problems in it. */
 public record ApprovalItem(
         long campaignId,
         String name,
@@ -15,5 +15,5 @@ public record ApprovalItem(
         BigDecimal budget,
         String headline,
         String offerText,
-        String language,
+        List<String> languages,
         List<String> creativeProblems) {}

@@ -1,5 +1,6 @@
 package com.airportmedia.platform.service.admin;
 
+import com.airportmedia.platform.domain.entity.Creative;
 import com.airportmedia.platform.domain.model.validation.ScreenCopyLimits;
 import java.util.ArrayList;
 import java.util.List;
@@ -17,6 +18,18 @@ public final class CreativeQa {
     static final Set<String> RENDERABLE_LANGUAGES = Set.of("en", "ar", "es");
 
     private CreativeQa() {}
+
+    /**
+     * Checks the creative in every language it can render in, since a screen switched to a translation plays that
+     * copy. A translation's problems are prefixed with its language ("es: …").
+     */
+    public static List<String> problems(Creative creative) {
+        List<String> problems = new ArrayList<>(
+                problems(creative.headline, creative.offerText, creative.body, creative.language));
+        creative.translations.forEach((lang, t) -> problems(t.headline, t.offerText, t.body, lang)
+                .forEach(p -> problems.add(lang + ": " + p)));
+        return problems;
+    }
 
     /** @return human-readable problems; empty when the creative is good to play. */
     public static List<String> problems(String headline, String offerText, String body, String language) {

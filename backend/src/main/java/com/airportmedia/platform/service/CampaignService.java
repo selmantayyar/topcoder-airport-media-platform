@@ -1,6 +1,7 @@
 package com.airportmedia.platform.service;
 
 import com.airportmedia.platform.common.enums.CampaignStatus;
+import com.airportmedia.platform.common.exception.FieldValidationException;
 import com.airportmedia.platform.domain.entity.Advertiser;
 import com.airportmedia.platform.domain.entity.Campaign;
 import com.airportmedia.platform.domain.entity.Creative;
@@ -9,6 +10,7 @@ import com.airportmedia.platform.domain.entity.GateAssignment;
 import com.airportmedia.platform.domain.model.input.CampaignDraft;
 import com.airportmedia.platform.domain.model.input.CampaignTargeting;
 import com.airportmedia.platform.domain.model.input.CampaignView;
+import com.airportmedia.platform.domain.model.input.CopyTranslationDraft;
 import com.airportmedia.platform.domain.model.input.PromoRequest;
 import com.airportmedia.platform.domain.model.output.AudienceMatch;
 import com.airportmedia.platform.domain.model.output.BuilderOptions;
@@ -127,14 +129,17 @@ public class CampaignService {
         c.createdAt = clock.snapshot().simTime();
         campaigns.persist(c);
 
+        Creative creative;
         if (draft.creativeId() != null) {
             Creative source = requireLibraryCreative(draft.creativeId(), advertiser);
-            creatives.persist(creative(c, source.headline, source.offerText, source.body, source.language,
-                    source.templateKey));
+            creative = creative(c, source.headline, source.offerText, source.body, source.language, source.templateKey);
+            creative.copyTranslationsFrom(source);
         } else {
             String language = draft.language() != null && !draft.language().isBlank() ? draft.language() : "en";
-            creatives.persist(creative(c, draft.headline(), draft.offerText(), draft.body(), language, "promo-basic"));
+            creative = creative(c, draft.headline(), draft.offerText(), draft.body(), language, "promo-basic");
         }
+        applyTranslations(creative, draft.translations());
+        creatives.persist(creative);
         return historyRow(c, Map.of(), Map.of());
     }
 
@@ -184,8 +189,12 @@ public class CampaignService {
         copy.createdAt = now;
         campaigns.persist(copy);
 
-        creatives.firstForCampaign(original.id).ifPresent(source -> creatives.persist(
-                creative(copy, source.headline, source.offerText, source.body, source.language, source.templateKey)));
+        creatives.firstForCampaign(original.id).ifPresent(source -> {
+            Creative creative = creative(copy, source.headline, source.offerText, source.body, source.language,
+                    source.templateKey);
+            creative.copyTranslationsFrom(source);
+            creatives.persist(creative);
+        });
         return historyRow(copy, Map.of(), Map.of());
     }
 
@@ -205,7 +214,7 @@ public class CampaignService {
 
         return new CampaignDraft(
                 c.advertiser.id, name.length() > 120 ? name.substring(0, 120) : name, creativeId,
-                null, null, null, null,
+                null, null, null, null, null,
                 t.gates(), t.zoneIds(), t.screenIds(), t.destinations(), t.haul(),
                 t.minDwellMinutes(), t.minDelayMinutes(), t.minCrowd(),
                 t.weightBusiness(), t.weightHoliday(), t.weightFamily(), t.spendTarget(),
@@ -231,11 +240,11 @@ public class CampaignService {
         Map<String, CreativeSummary> unique = new LinkedHashMap<>();
         creatives.findByAdvertiser(advertiserId).stream()
                 .sorted(Comparator.comparing((Creative c) -> c.id).reversed())
-                .forEach(c -> unique.putIfAbsent(c.headline + '|' + c.offerText + '|' + c.body + '|' + c.language,
+                .forEach(c -> unique.putIfAbsent(c.headline + '|' + c.offerText + '|' + c.body + '|' + c.languages(),
                         new CreativeSummary(c.id,
                                 c.campaign != null ? c.campaign.id : null,
                                 c.campaign != null ? c.campaign.name : null,
-                                c.headline, c.offerText, c.body, c.language, c.templateKey)));
+                                c.headline, c.offerText, c.body, c.language, c.templateKey, c.languages())));
         return List.copyOf(unique.values());
     }
 
@@ -302,6 +311,20 @@ public class CampaignService {
             throw new BadRequestException("Creative " + creativeId + " belongs to another advertiser");
         }
         return creative;
+    }
+
+    /** Adds the retailer's own translations; one in the creative's primary language would shadow its original copy. */
+    private static void applyTranslations(Creative creative, List<CopyTranslationDraft> translations) {
+        if (translations == null) {
+            return;
+        }
+        for (CopyTranslationDraft t : translations) {
+            if (t.language().equalsIgnoreCase(creative.language)) {
+                throw FieldValidationException.of("translations",
+                        "a translation must be in a language other than the creative's own (" + creative.language + ")");
+            }
+            creative.translate(t.language(), t.headline(), t.offerText(), t.body());
+        }
     }
 
     /** A campaign's own creative. Library reuse copies the source, so editing one never changes another's ad. */

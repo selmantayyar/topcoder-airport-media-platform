@@ -6,6 +6,7 @@ import com.airportmedia.platform.domain.entity.GateAssignment;
 import com.airportmedia.platform.domain.entity.PromoCode;
 import com.airportmedia.platform.domain.entity.Screen;
 import com.airportmedia.platform.domain.model.output.DecisionResult;
+import com.airportmedia.platform.domain.model.output.LocalizedCopy;
 import com.airportmedia.platform.domain.model.output.PlaybackView;
 import com.airportmedia.platform.domain.model.output.PlaybackView.CreativeView;
 import com.airportmedia.platform.domain.model.output.PlaybackView.FidsEntry;
@@ -72,8 +73,16 @@ public class PlaybackService {
                 .toList();
     }
 
-    @Transactional
     public PlaybackView playback(long screenId) {
+        return playback(screenId, null);
+    }
+
+    /**
+     * What the screen shows now, with the ad's copy in {@code language} when the creative has it (else its own
+     * language — the view's {@code creative.language} says which). Language never changes the decision.
+     */
+    @Transactional
+    public PlaybackView playback(long screenId, String language) {
         Screen screen = screens.findByIdOptional(screenId)
                 .orElseThrow(() -> new NotFoundException("No screen " + screenId));
         Instant now = clock.snapshot().simTime();
@@ -83,7 +92,7 @@ public class PlaybackService {
         PromoPlayback promo = null;
         if (decision.winnerCampaignId() != null) {
             creative = creatives.firstForCampaign(decision.winnerCampaignId())
-                    .map(PlaybackService::creativeView)
+                    .map(c -> creativeView(c, language))
                     .orElse(null);
             promo = promoCodes.listClaimableForCampaign(decision.winnerCampaignId()).stream()
                     .filter(p -> now.isBefore(PromoPolicy.effectiveExpiry(p)))
@@ -135,9 +144,10 @@ public class PlaybackService {
                 s.nearestGates, s.orientation.name(), s.status.name());
     }
 
-    private static CreativeView creativeView(Creative c) {
+    private static CreativeView creativeView(Creative c, String language) {
+        LocalizedCopy copy = c.copyIn(language);
         return new CreativeView(
-                c.advertiser.name, c.headline, c.body, c.offerText, c.language, c.templateKey);
+                c.advertiser.name, copy.headline(), copy.body(), copy.offerText(), copy.language(), c.templateKey);
     }
 
     private static PromoPlayback promoPlayback(PromoCode promo, Instant now) {

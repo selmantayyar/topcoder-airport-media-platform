@@ -2,13 +2,13 @@ package com.airportmedia.platform.service;
 
 import com.airportmedia.platform.common.enums.ClaimStatus;
 import com.airportmedia.platform.common.enums.PartyType;
-import com.airportmedia.platform.domain.entity.Creative;
 import com.airportmedia.platform.domain.entity.Flight;
 import com.airportmedia.platform.domain.entity.PromoCode;
 import com.airportmedia.platform.domain.entity.PromoScan;
 import com.airportmedia.platform.domain.entity.Redemption;
 import com.airportmedia.platform.domain.model.output.ClaimResult;
 import com.airportmedia.platform.domain.model.output.CrowdProfile;
+import com.airportmedia.platform.domain.model.output.LocalizedCopy;
 import com.airportmedia.platform.domain.model.output.PromoInfo;
 import com.airportmedia.platform.domain.model.output.PromoIssued;
 import com.airportmedia.platform.domain.model.output.ServerEvent;
@@ -62,17 +62,22 @@ public class ClaimService {
         this.issuance = issuance;
     }
 
-    @Transactional
     public PromoInfo info(String code) {
+        return info(code, null);
+    }
+
+    /** The claim page's view of a code, with the offer in {@code language} when the ad has that copy. */
+    @Transactional
+    public PromoInfo info(String code, String language) {
         PromoCode promo = require(code);
         Instant now = clock.snapshot().simTime();
         Instant expiresAt = PromoPolicy.effectiveExpiry(promo);
         boolean expired = now.isAfter(expiresAt);
         long secondsRemaining = Math.max(0, Duration.between(now, expiresAt).getSeconds());
-        Creative creative = creativeFor(promo);
+        LocalizedCopy copy = copyFor(promo, language);
         return new PromoInfo(
-                promo.code, promo.campaign.id, promo.campaign.name,
-                headline(promo, creative), offer(promo, creative), expiresAt,
+                promo.code, promo.campaign.id, promo.campaign.name, promo.campaign.advertiser.name,
+                headline(promo, copy), offer(promo, copy), expiresAt,
                 promo.redeemed, expired, secondsRemaining);
     }
 
@@ -113,16 +118,20 @@ public class ClaimService {
         return issuance.issue(parent.campaign, parent.validUntil, parent.linkedFlight, parent.code);
     }
 
-    @Transactional
     public ClaimResult claim(String code) {
+        return claim(code, null);
+    }
+
+    @Transactional
+    public ClaimResult claim(String code, String language) {
         PromoCode promo = require(code);
         Instant now = clock.snapshot().simTime();
 
         if (now.isAfter(PromoPolicy.effectiveExpiry(promo))) {
-            return result(ClaimStatus.EXPIRED, promo, null, "This offer has expired.");
+            return result(ClaimStatus.EXPIRED, promo, null, "This offer has expired.", language);
         }
         if (promo.redeemed) {
-            return result(ClaimStatus.ALREADY_CLAIMED, promo, null, "This code has already been claimed.");
+            return result(ClaimStatus.ALREADY_CLAIMED, promo, null, "This code has already been claimed.", language);
         }
 
         String segment = segmentOf(promo.linkedFlight);
@@ -139,7 +148,7 @@ public class ClaimService {
                 "code", promo.code,
                 "segment", segment == null ? "" : segment)));
 
-        return result(ClaimStatus.CLAIMED, promo, segment, "Offer claimed — show this screen at the counter.");
+        return result(ClaimStatus.CLAIMED, promo, segment, "Offer claimed — show this screen at the counter.", language);
     }
 
     private PromoCode require(String code) {
@@ -147,10 +156,10 @@ public class ClaimService {
                 .orElseThrow(() -> new NotFoundException("No promo code " + code));
     }
 
-    private ClaimResult result(ClaimStatus status, PromoCode promo, String segment, String message) {
+    private ClaimResult result(ClaimStatus status, PromoCode promo, String segment, String message, String language) {
         return new ClaimResult(
                 status, promo.code, promo.campaign.id, promo.campaign.name,
-                offer(promo, creativeFor(promo)), PromoPolicy.effectiveExpiry(promo),
+                offer(promo, copyFor(promo, language)), PromoPolicy.effectiveExpiry(promo),
                 status == ClaimStatus.CLAIMED ? clock.snapshot().simTime() : null,
                 segment, message);
     }
@@ -165,18 +174,18 @@ public class ClaimService {
         return dominant.name().toLowerCase();
     }
 
-    private Creative creativeFor(PromoCode promo) {
-        return creatives.firstForCampaign(promo.campaign.id).orElse(null);
+    private LocalizedCopy copyFor(PromoCode promo, String language) {
+        return creatives.firstForCampaign(promo.campaign.id).map(c -> c.copyIn(language)).orElse(null);
     }
 
-    private static String offer(PromoCode promo, Creative creative) {
-        if (creative == null) {
+    private static String offer(PromoCode promo, LocalizedCopy copy) {
+        if (copy == null) {
             return promo.campaign.name;
         }
-        return creative.offerText != null ? creative.offerText : creative.headline;
+        return copy.offerText() != null ? copy.offerText() : copy.headline();
     }
 
-    private static String headline(PromoCode promo, Creative creative) {
-        return creative != null ? creative.headline : promo.campaign.name;
+    private static String headline(PromoCode promo, LocalizedCopy copy) {
+        return copy != null ? copy.headline() : promo.campaign.name;
     }
 }

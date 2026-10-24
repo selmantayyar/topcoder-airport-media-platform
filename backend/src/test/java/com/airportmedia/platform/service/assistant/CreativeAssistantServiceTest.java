@@ -55,6 +55,11 @@ class CreativeAssistantServiceTest {
         List<CreativeSummary> library = campaigns.library(retailer);
         assertThat(library).extracting(CreativeSummary::id)
                 .contains(result.pages().get(0).creativeId(), result.pages().get(1).creativeId());
+        // Either page, picked for a campaign, renders the other language on a screen switched to it.
+        assertThat(library).filteredOn(c -> c.id() == result.pages().get(0).creativeId()).singleElement()
+                .satisfies(c -> assertThat(c.languages()).containsExactly("en", "es"));
+        assertThat(library).filteredOn(c -> c.id() == result.pages().get(1).creativeId()).singleElement()
+                .satisfies(c -> assertThat(c.languages()).containsExactly("es", "en"));
     }
 
     @Test

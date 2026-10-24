@@ -9,7 +9,8 @@ import {
 } from '../server/api';
 import { isInjectedEvent } from '../server/events';
 import { useServerEvents, type ServerEvent } from '../server/stream';
-import { day, kindLabel, money } from '../format';
+import { day, money, num } from '../format';
+import { useI18n } from '../i18n/I18nProvider';
 
 type Tab = 'inventory' | 'yield' | 'approvals' | 'advertisers';
 
@@ -18,6 +19,7 @@ type Tab = 'inventory' | 'yield' | 'approvals' | 'advertisers';
  * forecast, the approval queue that gates what the decision pipeline may play, and the advertiser overview.
  */
 export function MediaManagerView() {
+  const { t } = useI18n();
   const [tab, setTab] = useState<Tab>('approvals');
   const [inventory, setInventory] = useState<InventoryView | null>(null);
   const [approvals, setApprovals] = useState<ApprovalItem[]>([]);
@@ -43,32 +45,30 @@ export function MediaManagerView() {
   const decide = (item: ApprovalItem, approve: boolean) =>
     (approve ? media.approve(item.campaignId) : media.reject(item.campaignId))
       .then(() => {
-        setNotice(approve
-          ? `Approved “${item.name}” — it is now live for the decision pipeline.`
-          : `Rejected “${item.name}” — the decision pipeline will not play it.`);
+        setNotice(t(approve ? 'mm.approved' : 'mm.rejected', { name: item.name }));
         load();
       })
-      .catch((e: unknown) => setNotice(errorMessage(e)));
+      .catch((e: unknown) => setNotice(errorMessage(e, t('common.failed'))));
 
   const tabs: { id: Tab; label: string }[] = [
-    { id: 'approvals', label: `Approval queue (${approvals.length})` },
-    { id: 'inventory', label: 'Inventory calendar' },
-    { id: 'yield', label: 'Yield & forecast' },
-    { id: 'advertisers', label: 'Advertisers' },
+    { id: 'approvals', label: t('mm.tab.approvals', { n: approvals.length }) },
+    { id: 'inventory', label: t('mm.tab.inventory') },
+    { id: 'yield', label: t('mm.tab.yield') },
+    { id: 'advertisers', label: t('mm.tab.advertisers') },
   ];
 
   return (
     <section className="mm">
       <header className="retail__head">
-        <h2>Media Manager</h2>
-        <nav className="retail__tabs" aria-label="Media Manager sections">
-          {tabs.map((t) => (
-            <button key={t.id} type="button" className={tab === t.id ? 'is-active' : ''} onClick={() => setTab(t.id)}>
-              {t.label}
+        <h2>{t('role.media-manager')}</h2>
+        <nav className="retail__tabs" aria-label={t('mm.sections')}>
+          {tabs.map((item) => (
+            <button key={item.id} type="button" className={tab === item.id ? 'is-active' : ''} onClick={() => setTab(item.id)}>
+              {item.label}
             </button>
           ))}
         </nav>
-        <button type="button" className="mm__refresh" onClick={load}>Refresh</button>
+        <button type="button" className="mm__refresh" onClick={load}>{t('mm.refresh')}</button>
       </header>
       {notice && <p className="history__notice">{notice}</p>}
 
@@ -81,32 +81,39 @@ export function MediaManagerView() {
 }
 
 function Approvals({ items, onDecide }: { items: ApprovalItem[]; onDecide: (i: ApprovalItem, approve: boolean) => void }) {
+  const { t } = useI18n();
   return (
     <div className="retail__panel">
-      <h3>Awaiting approval</h3>
-      <p className="builder__hint">Only approved campaigns reach the decision pipeline; rejected and pending ones are dropped by its hard filters.</p>
+      <h3>{t('mm.awaiting')}</h3>
+      <p className="builder__hint">{t('mm.awaitingHint')}</p>
       <table className="retail__table">
         <thead>
-          <tr><th>Campaign</th><th>Advertiser</th><th>Creative</th><th>QA</th><th>Schedule</th><th>Budget</th><th /></tr>
+          <tr>
+            <th>{t('common.campaign')}</th><th>{t('common.advertiser')}</th><th>{t('common.creative')}</th><th>{t('mm.qa')}</th>
+            <th>{t('common.schedule')}</th><th className="num">{t('common.budget')}</th><th />
+          </tr>
         </thead>
         <tbody>
           {items.map((i) => (
             <tr key={i.campaignId}>
               <td>{i.name}</td>
               <td>{i.advertiserName}</td>
-              <td>{i.headline ?? '—'}{i.offerText && i.offerText !== i.headline ? ` · ${i.offerText}` : ''}</td>
+              <td>
+                {i.headline ?? '—'}{i.offerText && i.offerText !== i.headline ? ` · ${i.offerText}` : ''}
+                {i.languages.length > 0 && <span className="mm__langs"> {i.languages.map((l) => l.toUpperCase()).join(' · ')}</span>}
+              </td>
               <td>{i.creativeProblems.length === 0
-                ? <span className="tag tag--running">Pass</span>
+                ? <span className="tag tag--running">{t('mm.pass')}</span>
                 : <span className="mm__qa-fail" title={i.creativeProblems.join('; ')}>⚠ {i.creativeProblems.join('; ')}</span>}</td>
               <td className="history__dates">{day(i.scheduleStart)} → {day(i.scheduleEnd)}</td>
               <td className="num">{money(i.budget)}</td>
               <td className="history__actions">
-                <button type="button" onClick={() => onDecide(i, true)}>Approve</button>
-                <button type="button" onClick={() => onDecide(i, false)}>Reject</button>
+                <button type="button" onClick={() => onDecide(i, true)}>{t('mm.approve')}</button>
+                <button type="button" onClick={() => onDecide(i, false)}>{t('mm.reject')}</button>
               </td>
             </tr>
           ))}
-          {items.length === 0 && <tr><td colSpan={7} className="retail__empty">Nothing waiting.</td></tr>}
+          {items.length === 0 && <tr><td colSpan={7} className="retail__empty">{t('mm.nothing')}</td></tr>}
         </tbody>
       </table>
     </div>
@@ -114,6 +121,7 @@ function Approvals({ items, onDecide }: { items: ApprovalItem[]; onDecide: (i: A
 }
 
 function InventoryCalendar({ inventory }: { inventory: InventoryView }) {
+  const { t } = useI18n();
   const zones = useMemo(() => [...new Set(inventory.screens.map((s) => s.zoneName))], [inventory]);
   const [zone, setZone] = useState(zones[0] ?? '');
   const [showPrices, setShowPrices] = useState(false);
@@ -122,21 +130,21 @@ function InventoryCalendar({ inventory }: { inventory: InventoryView }) {
   return (
     <div className="retail__panel">
       <div className="mm__bar">
-        <h3>Inventory · {inventory.day}</h3>
-        <select value={zone} onChange={(e) => setZone(e.target.value)} aria-label="Zone">
+        <h3>{t('mm.inventory', { day: day(inventory.day) })}</h3>
+        <select value={zone} onChange={(e) => setZone(e.target.value)} aria-label={t('mm.zone')}>
           {zones.map((z) => <option key={z} value={z}>{z}</option>)}
         </select>
-        <label className="mm__toggle"><input type="checkbox" checked={showPrices} onChange={(e) => setShowPrices(e.target.checked)} /> Show prices</label>
+        <label className="mm__toggle"><input type="checkbox" checked={showPrices} onChange={(e) => setShowPrices(e.target.checked)} /> {t('mm.showPrices')}</label>
         <span className="mm__legend">
-          <span className="mm__cell mm__cell--booked">●</span> booked
-          <span className="mm__cell">○</span> available
-          <span className="mm__cell mm__cell--premium">★</span> premium (high predicted footfall)
+          <span className="mm__cell mm__cell--booked">●</span> {t('mm.booked')}
+          <span className="mm__cell">○</span> {t('mm.available')}
+          <span className="mm__cell mm__cell--premium">★</span> {t('mm.premium')}
         </span>
       </div>
       <div className="mm__scroll">
         <table className="mm__grid">
           <thead>
-            <tr><th>Screen</th>{inventory.hours.map((h) => <th key={h}>{String(h).padStart(2, '0')}</th>)}</tr>
+            <tr><th>{t('mm.screen')}</th>{inventory.hours.map((h) => <th key={h}>{String(h).padStart(2, '0')}</th>)}</tr>
           </thead>
           <tbody>
             {rows.map((r) => (
@@ -153,34 +161,33 @@ function InventoryCalendar({ inventory }: { inventory: InventoryView }) {
 }
 
 function SlotCell({ slot, showPrice }: { slot: InventorySlot; showPrice: boolean }) {
-  const state = slot.booked ? 'Booked' : 'Available';
+  const { t } = useI18n();
+  const state = slot.booked ? t('mm.slotBooked') : t('mm.slotAvailable');
   const cls = ['mm__cell', slot.booked ? 'mm__cell--booked' : '', slot.premium ? 'mm__cell--premium' : ''].join(' ');
   return (
-    <td className={cls} title={`${state}${slot.premium ? ' · premium' : ''} · ${slot.footfall} pax predicted · ${money(slot.price)}`}>
+    <td className={cls} title={`${state}${slot.premium ? ` · ${t('mm.slotPremium')}` : ''} · ${t('mm.slotPax', { n: num(slot.footfall) })} · ${money(slot.price)}`}>
       {showPrice ? money(slot.price) : `${slot.booked ? '●' : '○'}${slot.premium ? '★' : ''}`}
     </td>
   );
 }
 
 function Yield({ inventory }: { inventory: InventoryView }) {
+  const { t } = useI18n();
   return (
     <div className="retail__panel">
-      <h3>Yield &amp; forecast</h3>
+      <h3>{t('mm.tab.yield')}</h3>
       <div className="kpi-row">
-        <Stat label="Occupancy today" value={`${inventory.occupancyPct.toFixed(1)}%`} />
-        <Stat label="Base price / screen-hour" value={money(inventory.basePricePerHour)} />
-        <Stat label="Premium from" value={`${Math.round(inventory.premiumFootfallThreshold)} pax`} />
-        <Stat label="7-day revenue forecast" value={money(inventory.forecastTotal)} />
+        <Stat label={t('mm.occupancyToday')} value={`${inventory.occupancyPct.toFixed(1)}%`} />
+        <Stat label={t('mm.basePrice')} value={money(inventory.basePricePerHour)} />
+        <Stat label={t('mm.premiumFrom')} value={t('common.pax', { n: num(Math.round(inventory.premiumFootfallThreshold)) })} />
+        <Stat label={t('mm.forecast7')} value={money(inventory.forecastTotal)} />
       </div>
-      <p className="builder__hint">
-        Suggested price per slot = base × predicted footfall ÷ median footfall (floored at ½×, capped at 2½×).
-        The forecast prices every booked slot, assuming each day repeats today's footfall pattern.
-      </p>
+      <p className="builder__hint">{t('mm.yieldHint')}</p>
       <table className="retail__table">
-        <thead><tr><th>Day</th><th>Occupancy</th><th>Forecast revenue</th></tr></thead>
+        <thead><tr><th>{t('mm.day')}</th><th className="num">{t('mm.occupancy')}</th><th className="num">{t('mm.forecastRevenue')}</th></tr></thead>
         <tbody>
           {inventory.forecast.map((d) => (
-            <tr key={d.date}><td>{d.date}</td><td className="num">{d.occupancyPct.toFixed(1)}%</td><td className="num">{money(d.revenue)}</td></tr>
+            <tr key={d.date}><td>{day(d.date)}</td><td className="num">{d.occupancyPct.toFixed(1)}%</td><td className="num">{money(d.revenue)}</td></tr>
           ))}
         </tbody>
       </table>
@@ -189,27 +196,32 @@ function Yield({ inventory }: { inventory: InventoryView }) {
 }
 
 function Advertisers({ rows }: { rows: AdvertiserOverviewRow[] }) {
+  const { t, label } = useI18n();
   return (
     <div className="retail__panel">
-      <h3>Advertisers by spend</h3>
+      <h3>{t('mm.bySpend')}</h3>
       <table className="retail__table">
         <thead>
-          <tr><th>#</th><th>Advertiser</th><th>Kind</th><th>Spend</th><th>Impr.</th><th>Redeem</th><th>Running</th><th>Under-delivering</th></tr>
+          <tr>
+            <th>#</th><th>{t('common.advertiser')}</th><th>{t('common.kind')}</th><th className="num">{t('common.spend')}</th>
+            <th className="num">{t('common.impr')}</th><th className="num">{t('common.redeem')}</th>
+            <th className="num">{t('mm.running')}</th><th>{t('mm.under')}</th>
+          </tr>
         </thead>
         <tbody>
           {rows.map((r, i) => (
             <tr key={r.advertiserId}>
               <td>{i + 1}</td>
               <td>{r.name}</td>
-              <td>{kindLabel(r.kind)}</td>
+              <td>{label('advertiserKind', r.kind)}</td>
               <td className="num">{money(r.spend)}</td>
-              <td className="num">{r.impressions.toLocaleString()}</td>
-              <td className="num">{r.redemptions.toLocaleString()}</td>
+              <td className="num">{num(r.impressions)}</td>
+              <td className="num">{num(r.redemptions)}</td>
               <td className="num">{r.runningCampaigns}</td>
               <td>
                 {r.underDelivering.length === 0 ? '—' : r.underDelivering.map((u) => (
                   <div key={u.campaignId} className="mm__flag">
-                    ⚠ {u.name}: {u.pacePct.toFixed(0)}% of pace ({u.deliveredPct.toFixed(1)}% delivered vs {u.expectedPct.toFixed(1)}% expected)
+                    {t('mm.pace', { name: u.name, pace: u.pacePct.toFixed(0), delivered: u.deliveredPct.toFixed(1), expected: u.expectedPct.toFixed(1) })}
                   </div>
                 ))}
               </td>

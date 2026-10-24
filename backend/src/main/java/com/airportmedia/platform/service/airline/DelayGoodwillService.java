@@ -177,6 +177,11 @@ public class DelayGoodwillService {
         creative.offerText = (lounge ? "Lounge pass at " : "Free meal at ") + partner.name + " for " + flight.flightNumber;
         creative.body = "Sorry for the wait. Co-funded by " + airline.name + " and " + partner.name
                 + " — scan to claim before boarding closes.";
+        creative.translate("es",
+                lounge ? "¿Retrasado? Relájate en la sala VIP" : "¿Retrasado? Tu comida corre por nuestra cuenta",
+                (lounge ? "Pase a la sala VIP en " : "Comida gratis en ") + partner.name + " para el vuelo " + flight.flightNumber,
+                "Disculpa la espera. Cofinanciado por " + airline.name + " y " + partner.name
+                        + " — escanea para canjear antes del cierre del embarque.");
         return creative;
     }
 

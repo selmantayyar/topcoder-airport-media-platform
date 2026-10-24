@@ -1,6 +1,8 @@
 package com.airportmedia.platform.domain.model.output;
 
-/** A reusable ad from the retailer's creative library. */
+import java.util.List;
+
+/** A reusable ad from the retailer's creative library; {@code languages} lists every language it renders in. */
 public record CreativeSummary(
         long id,
         Long campaignId,
@@ -9,4 +11,5 @@ public record CreativeSummary(
         String offerText,
         String body,
         String language,
-        String templateKey) {}
+        String templateKey,
+        List<String> languages) {}

@@ -5,12 +5,14 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.airportmedia.platform.common.enums.Haul;
 import com.airportmedia.platform.common.enums.SpendTier;
+import com.airportmedia.platform.common.exception.FieldValidationException;
 import com.airportmedia.platform.domain.entity.Campaign;
 import com.airportmedia.platform.domain.entity.Creative;
 import com.airportmedia.platform.domain.entity.Flight;
 import com.airportmedia.platform.domain.entity.Screen;
 import com.airportmedia.platform.domain.entity.Zone;
 import com.airportmedia.platform.domain.model.input.CampaignDraft;
+import com.airportmedia.platform.domain.model.input.CopyTranslationDraft;
 import com.airportmedia.platform.domain.model.input.PromoRequest;
 import com.airportmedia.platform.service.decision.DecisionService;
 import com.airportmedia.platform.service.media.MediaManagerService;
@@ -22,6 +24,7 @@ import jakarta.ws.rs.WebApplicationException;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 
@@ -56,10 +59,15 @@ class CampaignServiceTest {
     }
 
     private CampaignDraft draft(long advertiserId, Long creativeId, Set<Long> zones, Set<Long> screens) {
+        return draft(advertiserId, creativeId, zones, screens, null);
+    }
+
+    private CampaignDraft draft(long advertiserId, Long creativeId, Set<Long> zones, Set<Long> screens,
+            List<CopyTranslationDraft> translations) {
         return new CampaignDraft(
                 advertiserId, "Holiday perfume push", creativeId,
                 creativeId == null ? "Fly fragrant" : null, creativeId == null ? "30% off travel sizes" : null,
-                null, "en",
+                null, "en", translations,
                 Set.of(), zones, screens, Set.of(), Haul.INTERNATIONAL,
                 0, 0, 0, 0.1, 0.9, 0.6, SpendTier.MEDIUM,
                 NOW.minus(Duration.ofHours(1)), NOW.plus(Duration.ofDays(3)),
@@ -110,6 +118,30 @@ class CampaignServiceTest {
                 .setParameter("id", saved.campaignId()).getSingleResult();
         assertThat(copy.id).isNotEqualTo(library.get(0).id());
         assertThat(copy.headline).isEqualTo(library.get(0).headline());
+        assertThat(copy.copyIn("es").language()).isEqualTo("es");
+        assertThat(library.get(0).languages()).containsExactly("en", "es");
+    }
+
+    @Test
+    void newCopyCanCarryASpanishTranslation() {
+        clock.jumpTo(NOW);
+
+        var saved = campaigns.create(draft(dutyFree().advertiser.id, null, Set.of(), Set.of(),
+                List.of(new CopyTranslationDraft("es", "Vuela perfumado", "30% en tamaños de viaje", null))));
+
+        Creative creative = em.createQuery("from Creative where campaign.id = :id", Creative.class)
+                .setParameter("id", saved.campaignId()).getSingleResult();
+        assertThat(creative.copyIn("es").headline()).isEqualTo("Vuela perfumado");
+        assertThat(creative.copyIn("en").headline()).isEqualTo("Fly fragrant");
+    }
+
+    @Test
+    void aTranslationInThePrimaryLanguageIsRejected() {
+        clock.jumpTo(NOW);
+
+        assertThatThrownBy(() -> campaigns.create(draft(dutyFree().advertiser.id, null, Set.of(), Set.of(),
+                List.of(new CopyTranslationDraft("en", "Other words", null, null)))))
+                .isInstanceOf(FieldValidationException.class);
     }
 
     @Test
@@ -142,6 +174,8 @@ class CampaignServiceTest {
         assertThat(prefill.scheduleStart()).isEqualTo(NOW);
         var saved = campaigns.create(prefill);
         assertThat(saved.status()).isEqualTo("PENDING_APPROVAL");
+        assertThat(em.createQuery("from Creative where campaign.id = :id", Creative.class)
+                .setParameter("id", saved.campaignId()).getSingleResult().copyIn("es").language()).isEqualTo("es");
         assertThat(saved.campaignId()).isNotEqualTo(original.id);
     }
 

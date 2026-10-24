@@ -13,7 +13,7 @@ html[data-theme='light'] {
   --border: #e3e6ec;
   --text: #1c2430;
   --text-muted: #6b7482;
-  --accent: #2563eb;
+  --accent: var(--brand-accent-light, #2563eb);
   --ok: #16a34a;
   --warn: #d97706;
   --bad: #dc2626;
@@ -28,7 +28,7 @@ html[data-theme='dark'] {
   --border: #272d38;
   --text: #e6edf3;
   --text-muted: #8b949e;
-  --accent: #58a6ff;
+  --accent: var(--brand-accent-dark, #58a6ff);
   --ok: #3fb950;
   --warn: #d29922;
   --bad: #f85149;
@@ -104,11 +104,11 @@ h1 {
 .kiosk__stage { flex: 1; display: flex; gap: 24px; padding: 32px; align-items: stretch; }
 .kiosk--portrait .kiosk__stage { flex-direction: column; }
 .ad { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 18px; padding: 48px;
-  border-radius: 20px; background: linear-gradient(135deg, #16365c, #0b1b30); box-shadow: inset 0 0 120px rgba(0,0,0,.4); }
+  border-radius: 20px; background: linear-gradient(135deg, var(--brand-screen-from, #16365c), var(--brand-screen-to, #0b1b30)); box-shadow: inset 0 0 120px rgba(0,0,0,.4); }
 .ad--empty { background: linear-gradient(135deg, #1a2436, #0b1120); align-items: center; text-align: center; }
-.ad__brand { font-size: 18px; letter-spacing: 3px; text-transform: uppercase; color: #ffcf6a; }
+.ad__brand { font-size: 18px; letter-spacing: 3px; text-transform: uppercase; color: var(--brand-screen-highlight, #ffcf6a); }
 .ad__headline { font-size: clamp(32px, 6vw, 76px); line-height: 1.05; margin: 0; color: #fff; }
-.ad__offer { font-size: clamp(20px, 3vw, 36px); font-weight: 700; color: #7fe6a9; margin: 0; }
+.ad__offer { font-size: clamp(20px, 3vw, 36px); font-weight: 700; color: var(--brand-screen-offer, #7fe6a9); margin: 0; }
 .ad__body { font-size: 18px; color: #c6d4ea; margin: 0; max-width: 40ch; }
 
 /* Promo + QR */
@@ -153,12 +153,17 @@ h1 {
   background: linear-gradient(160deg, #eef2f9, #dde6f3); }
 .claim__card { background: #fff; border-radius: 18px; box-shadow: 0 18px 50px rgba(20,35,70,.18);
   padding: 28px 24px; max-width: 420px; width: 100%; text-align: center; }
-.claim__logo { font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: #6b7482; }
-.claim__brand { color: #2563eb; font-weight: 600; margin: 18px 0 4px; }
-.claim__offer { font-size: 30px; margin: 0 0 16px; color: #1c2430; }
+.claim__top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.claim__logo { display: flex; align-items: center; gap: 6px; font-size: 12px; letter-spacing: 2px; text-transform: uppercase;
+  color: #6b7482; text-align: left; }
+.claim__logo .brand-logo { color: var(--brand-accent-light, #2563eb); flex: none; }
+.claim__brand { color: var(--brand-accent-light, #2563eb); font-weight: 600; margin: 18px 0 4px; }
+.claim__offer { font-size: clamp(24px, 7vw, 30px); line-height: 1.15; margin: 0 0 16px; color: #1c2430;
+  overflow-wrap: anywhere; }
 .claim__validity { color: #6b7482; font-size: 14px; }
 .claim__btn { width: 100%; padding: 16px; font: inherit; font-size: 18px; font-weight: 700; border: 0;
-  border-radius: 12px; background: #2563eb; color: #fff; cursor: pointer; }
+  border-radius: 12px; background: var(--brand-accent-light, #2563eb); color: #fff; cursor: pointer;
+  min-height: 48px; }
 .claim__btn:disabled { opacity: .6; }
 .claim__outcome { padding: 20px; border-radius: 12px; display: flex; flex-direction: column; gap: 6px; }
 .claim__outcome strong { font-size: 20px; }
@@ -166,8 +171,9 @@ h1 {
 .claim__outcome--already_claimed { background: #fff6e6; color: #b45309; }
 .claim__outcome--expired { background: #fdeaea; color: #b91c1c; }
 .claim__share { display: flex; flex-direction: column; align-items: center; gap: 8px; margin-top: 14px; color: #1c2430; }
-.claim__share a { font-size: 12px; word-break: break-all; color: #2563eb; }
-.claim__btn--secondary { background: #fff; color: #2563eb; border: 2px solid #2563eb; font-size: 16px; padding: 12px; }
+.claim__share a { font-size: 12px; word-break: break-all; color: var(--brand-accent-light, #2563eb); }
+.claim__btn--secondary { background: #fff; color: var(--brand-accent-light, #2563eb);
+  border: 2px solid var(--brand-accent-light, #2563eb); font-size: 16px; padding: 12px; }
 .claim__code { font-family: var(--mono); font-weight: 700; letter-spacing: 1px; }
 .claim__msg { color: #6b7482; }
 .claim__msg--bad { color: #dc2626; }
@@ -178,3 +184,13 @@ h1 {
 .ad--offline { background: repeating-linear-gradient(45deg, #11151c 0 12px, #0b0e13 12px 24px); align-items: center;
   text-align: center; color: #8592a6; }
 .ad--offline h1 { color: #ff6b6b; margin: 0; }
+
+/* Mobile claim page: a phone is the primary target — full-bleed card, thumb-sized controls, no zoom-on-focus. */
+@media (max-width: 480px) {
+  .claim { padding: 0; align-items: stretch; background: #fff; }
+  .claim__card { max-width: none; border-radius: 0; box-shadow: none; padding: 20px 18px 32px;
+    padding-bottom: max(32px, env(safe-area-inset-bottom)); }
+  .claim__outcome { padding: 16px; }
+  .claim__share svg { width: 140px; height: 140px; }
+}
+.lang-switch--claim .lang-switch__btn { min-width: 40px; min-height: 32px; }

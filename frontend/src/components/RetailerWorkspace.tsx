@@ -1,23 +1,25 @@
 import { useEffect, useState } from 'react';
 import { campaigns, errorMessage, retailers, type CampaignDraft, type CreativeSummary, type RetailerSummary } from '../server/api';
-import { kindLabel } from '../format';
+import { useI18n } from '../i18n/I18nProvider';
+import type { MessageKey } from '../i18n/messages';
 import { CampaignBuilder } from './CampaignBuilder';
 import { CampaignHistory } from './CampaignHistory';
 import { RetailerDashboard } from './RetailerDashboard';
 
 type Tab = 'dashboard' | 'build' | 'history';
 
-const TABS: { id: Tab; label: string }[] = [
-  { id: 'dashboard', label: 'Dashboard' },
-  { id: 'build', label: 'Build campaign' },
-  { id: 'history', label: 'History & library' },
+const TABS: { id: Tab; label: MessageKey }[] = [
+  { id: 'dashboard', label: 'retail.tab.dashboard' },
+  { id: 'build', label: 'retail.tab.build' },
+  { id: 'history', label: 'retail.tab.history' },
 ];
 
 /** The Retailer role: one company picker shared by the live dashboard, the builder, and history/library. */
 export function RetailerWorkspace() {
+  const { t, label } = useI18n();
   const [companies, setCompanies] = useState<RetailerSummary[]>([]);
   const [selected, setSelected] = useState<number | null>(null);
-  const [tab, setTab] = useState<Tab>('dashboard');
+  const [active, setTab] = useState<Tab>('dashboard');
   const [libraryCreative, setLibraryCreative] = useState<CreativeSummary | null>(null);
   const [prefill, setPrefill] = useState<CampaignDraft | null>(null);
   const [builderVersion, setBuilderVersion] = useState(0);
@@ -35,7 +37,7 @@ export function RetailerWorkspace() {
   const duplicate = (campaignId: number) =>
     Promise.all([campaigns.draft(campaignId), retailers.creatives(selected!)])
       .then(([draft, library]) => openBuilder(draft, library.find((c) => c.id === draft.creativeId) ?? null))
-      .catch((e: unknown) => setNotice(errorMessage(e, 'Could not duplicate this campaign')));
+      .catch((e: unknown) => setNotice(errorMessage(e, t('retail.duplicateFailed'))));
 
   useEffect(() => {
     retailers.list().then((list) => {
@@ -47,16 +49,16 @@ export function RetailerWorkspace() {
   return (
     <section className="retail">
       <header className="retail__head">
-        <h2>Retailer</h2>
-        <nav className="retail__tabs" aria-label="Retailer sections">
-          {TABS.map((t) => (
-            <button key={t.id} type="button" className={tab === t.id ? 'is-active' : ''} onClick={() => setTab(t.id)}>
-              {t.label}
+        <h2>{t('role.retailer')}</h2>
+        <nav className="retail__tabs" aria-label={t('retail.sections')}>
+          {TABS.map((tab) => (
+            <button key={tab.id} type="button" className={active === tab.id ? 'is-active' : ''} onClick={() => setTab(tab.id)}>
+              {t(tab.label)}
             </button>
           ))}
         </nav>
         <label className="retail__picker">
-          <span>Company</span>
+          <span>{t('retail.company')}</span>
           <select
             value={selected ?? ''}
             onChange={(e) => {
@@ -65,11 +67,11 @@ export function RetailerWorkspace() {
               setPrefill(null);
               setNotice(null);
             }}
-            aria-label="Select retail company"
+            aria-label={t('retail.selectCompany')}
           >
             {companies.map((c) => (
               <option key={c.id} value={c.id}>
-                {c.name} ({kindLabel(c.kind)} · {c.outletCount} outlet{c.outletCount === 1 ? '' : 's'})
+                {c.name} ({label('advertiserKind', c.kind)} · {t(c.outletCount === 1 ? 'retail.outlets.one' : 'retail.outlets.other', { n: c.outletCount })})
               </option>
             ))}
           </select>
@@ -78,8 +80,8 @@ export function RetailerWorkspace() {
 
       {notice && <p className="history__notice">{notice}</p>}
 
-      {selected != null && tab === 'dashboard' && <RetailerDashboard key={selected} advertiserId={selected} />}
-      {selected != null && tab === 'build' && (
+      {selected != null && active === 'dashboard' && <RetailerDashboard key={selected} advertiserId={selected} />}
+      {selected != null && active === 'build' && (
         <CampaignBuilder
           key={`${selected}-${builderVersion}`}
           advertiserId={selected}
@@ -87,7 +89,7 @@ export function RetailerWorkspace() {
           initialDraft={prefill}
           onClearCreative={() => setLibraryCreative(null)}
           onSaved={(row) => {
-            setNotice(`“${row.name}” was submitted for approval — once the Media Manager approves it, the decision pipeline will consider it.`);
+            setNotice(t('retail.submitted', { name: row.name }));
             setLibraryCreative(null);
             setPrefill(null);
             setHistoryVersion((v) => v + 1);
@@ -95,7 +97,7 @@ export function RetailerWorkspace() {
           }}
         />
       )}
-      {selected != null && tab === 'history' && (
+      {selected != null && active === 'history' && (
         <CampaignHistory
           key={selected}
           advertiserId={selected}

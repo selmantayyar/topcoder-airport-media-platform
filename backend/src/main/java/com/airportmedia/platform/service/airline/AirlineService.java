@@ -163,7 +163,28 @@ public class AirlineService {
         creative.headline = blank(request.headline()) ? defaultHeadline(request.type(), flight) : request.headline();
         creative.offerText = blank(request.offerText()) ? defaultOffer(request.type(), flight, gate) : request.offerText();
         creative.body = c.advertiser.name + " — for passengers on " + flight.flightNumber + ".";
+        // Only the platform's own default copy is translated; an airline's custom words stay as written.
+        if (blank(request.headline()) && blank(request.offerText())) {
+            creative.translate("es", defaultHeadlineEs(request.type(), flight), defaultOfferEs(request.type(), flight, gate),
+                    c.advertiser.name + " — para pasajeros del vuelo " + flight.flightNumber + ".");
+        }
         return creative;
+    }
+
+    private static String defaultHeadlineEs(SponsoredContentType type, Flight flight) {
+        return switch (type) {
+            case UPGRADE_OFFER -> "Mejora tu vuelo a " + flight.destination;
+            case LOUNGE_PASS -> "Relájate antes del vuelo " + flight.flightNumber;
+            case DESTINATION_PARTNER -> "Descubre " + flight.destination;
+        };
+    }
+
+    private static String defaultOfferEs(SponsoredContentType type, Flight flight, String gate) {
+        return switch (type) {
+            case UPGRADE_OFFER -> "Clase business desde $199 — pregunta en la puerta " + gate;
+            case LOUNGE_PASS -> "Pase a la sala VIP $39 — con tarjeta de embarque";
+            case DESTINATION_PARTNER -> "Ofertas de socios te esperan en " + flight.destination;
+        };
     }
 
     private static String defaultHeadline(SponsoredContentType type, Flight flight) {

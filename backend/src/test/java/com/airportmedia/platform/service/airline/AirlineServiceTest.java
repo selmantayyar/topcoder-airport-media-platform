@@ -18,6 +18,7 @@ import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
 import jakarta.ws.rs.WebApplicationException;
 import java.time.Instant;
+import com.airportmedia.platform.domain.entity.Creative;
 import org.junit.jupiter.api.Test;
 
 @QuarkusTest
@@ -103,5 +104,33 @@ class AirlineServiceTest {
         assertThatThrownBy(() -> airlines.schedule(airline("XY").id,
                 new SponsoredContentRequest(flight("XY501").id, SponsoredContentType.LOUNGE_PASS, null, null)))
                 .isInstanceOf(WebApplicationException.class);
+    }
+
+    @Test
+    void defaultSponsoredCopyIsWrittenInEnglishAndSpanish() {
+        clock.jumpTo(NOW);
+        Flight xy501 = flight("XY501");
+
+        var content = airlines.schedule(airline("XY").id,
+                new SponsoredContentRequest(xy501.id, SponsoredContentType.LOUNGE_PASS, null, null));
+
+        Creative creative = em.createQuery("from Creative where campaign.id = :c", Creative.class)
+                .setParameter("c", content.campaignId()).getSingleResult();
+        assertThat(creative.copyIn("es").language()).isEqualTo("es");
+        assertThat(creative.copyIn("es").headline()).contains("XY501").isNotEqualTo(creative.headline);
+        assertThat(creative.copyIn("es").offerText()).contains("$39");
+    }
+
+    @Test
+    void customSponsoredCopyIsNotTranslatedForTheAirline() {
+        clock.jumpTo(NOW);
+        Flight xy501 = flight("XY501");
+
+        var content = airlines.schedule(airline("XY").id,
+                new SponsoredContentRequest(xy501.id, SponsoredContentType.LOUNGE_PASS, "Our own words", "Our offer"));
+
+        Creative creative = em.createQuery("from Creative where campaign.id = :c", Creative.class)
+                .setParameter("c", content.campaignId()).getSingleResult();
+        assertThat(creative.copyIn("es").language()).isEqualTo("en");
     }
 }

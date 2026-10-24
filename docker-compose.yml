@@ -23,9 +23,10 @@ services:
       QUARKUS_DATASOURCE_JDBC_URL: jdbc:postgresql://db:5432/airport
       # Creative assistant: mock (offline, default) or llm. For llm, any OpenAI-compatible endpoint.
       APP_CREATIVE_ASSISTANT_PROVIDER: ${APP_CREATIVE_ASSISTANT_PROVIDER:-mock}
-      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
-      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-}
-      OPENAI_MODEL: ${OPENAI_MODEL:-}
+      # Quarkus rejects an empty value, so unset vars fall back to the same defaults as application.properties.
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-not-configured}
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-https://api.openai.com/v1/}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o-mini}
     depends_on:
       db:
         condition: service_healthy

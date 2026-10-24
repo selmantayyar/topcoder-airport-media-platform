@@ -431,8 +431,9 @@ public class SeedService {
             creative.templateKey = "promo-basic";
             creative.language = "en";
             creative.headline = spec.offer();
-            creative.body = "Limited-time offer for travellers at " + SampleAirport.NAME + ".";
+            creative.body = BODY_EN;
             creative.offerText = spec.offer();
+            creative.translate("es", OFFERS_ES.get(spec.offer()), OFFERS_ES.get(spec.offer()), BODY_ES);
             em.persist(creative);
 
             if (spec.advertiser().equals("Azure Duty-Free")) {
@@ -484,10 +485,12 @@ public class SeedService {
             creative.campaign = c;
             creative.name = c.name + " creative";
             creative.templateKey = "promo-basic";
-            creative.language = (i % 4 == 0) ? "es" : "en";
-            creative.headline = OFFERS[i % OFFERS.length];
-            creative.body = "Limited-time offer for travellers at " + SampleAirport.NAME + ".";
-            creative.offerText = OFFERS[i % OFFERS.length];
+            String offer = OFFERS[i % OFFERS.length];
+            creative.language = "en";
+            creative.headline = offer;
+            creative.body = BODY_EN;
+            creative.offerText = offer;
+            creative.translate("es", OFFERS_ES.get(offer), OFFERS_ES.get(offer), BODY_ES);
             em.persist(creative);
 
             if (c.status == CampaignStatus.RUNNING) {
@@ -550,6 +553,20 @@ public class SeedService {
         "15% off perfume", "Buy 2 get 1 free", "Lounge day pass", "Kids meal deal",
         "Premium watch sale", "Festive sweets 20% off", "Free coffee upgrade", "Duty-free spirits"
     };
+
+    /** Every seeded offer's Spanish copy, so each seeded ad renders in both screen languages. */
+    private static final Map<String, String> OFFERS_ES = Map.of(
+            "15% off perfume", "15% de descuento en perfumes",
+            "Buy 2 get 1 free", "Compra 2 y llévate 1 gratis",
+            "Lounge day pass", "Pase de día a la sala VIP",
+            "Kids meal deal", "Menú infantil en oferta",
+            "Premium watch sale", "Rebajas en relojes de lujo",
+            "Festive sweets 20% off", "Dulces festivos con 20% de descuento",
+            "Free coffee upgrade", "Mejora de café gratis",
+            "Duty-free spirits", "Licores libres de impuestos");
+
+    private static final String BODY_EN = "Limited-time offer for travellers at " + SampleAirport.NAME + ".";
+    private static final String BODY_ES = "Oferta por tiempo limitado para viajeros en " + SampleAirport.NAME + ".";
 
     private static String randomCode(Random rng) {
         String chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";

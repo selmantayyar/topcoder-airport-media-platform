@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
+import { money, num } from '../format';
+import { useI18n } from '../i18n/I18nProvider';
 import { admin, type AdminKpis, type AdminOverview, type MasterDataSchema } from '../server/api';
 import { isInjectedEvent } from '../server/events';
 import { useClock, useServerEvents, type ServerEvent } from '../server/stream';
@@ -12,6 +14,7 @@ import { TerminalMap } from './TerminalMap';
  */
 export function AdminConsole() {
   const { clock } = useClock();
+  const { t, label } = useI18n();
   const [overview, setOverview] = useState<AdminOverview | null>(null);
   const [schemas, setSchemas] = useState<MasterDataSchema[]>([]);
   const [masterTab, setMasterTab] = useState<string | null>(null);
@@ -44,12 +47,12 @@ export function AdminConsole() {
 
   return (
     <section className="console">
-      {overview ? <KpiStrip kpis={overview.kpis} /> : <p className="console__loading">Loading control room…</p>}
+      {overview ? <KpiStrip kpis={overview.kpis} /> : <p className="console__loading">{t('admin.loading')}</p>}
       {notice && <p className="field-error">{notice}</p>}
 
       <div className="console__grid">
         <div className="console__panel">
-          <h3>Terminal map</h3>
+          <h3>{t('admin.map')}</h3>
           {overview && <TerminalMap terminals={overview.terminals} />}
         </div>
         <div className="console__panel">
@@ -66,11 +69,11 @@ export function AdminConsole() {
       </div>
 
       <div className="console__panel">
-        <h3>Master data</h3>
-        <nav className="console__tabs" aria-label="Master data types">
+        <h3>{t('admin.masterData')}</h3>
+        <nav className="console__tabs" aria-label={t('admin.masterTypes')}>
           {schemas.map((s) => (
             <button key={s.type} type="button" className={s.type === masterTab ? 'is-active' : ''} onClick={() => setMasterTab(s.type)}>
-              {s.label}
+              {label('md.type', s.type)}
             </button>
           ))}
         </nav>
@@ -81,17 +84,17 @@ export function AdminConsole() {
 }
 
 function KpiStrip({ kpis }: { kpis: AdminKpis }) {
-  const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: kpis.currency, maximumFractionDigits: 0 });
+  const { t } = useI18n();
   return (
     <div className="kpi-row kpi-row--console">
-      <Tile label="Screens online" value={`${kpis.screensOnlinePct.toFixed(1)}%`} sub={`of ${kpis.screensTotal}`} />
-      <Tile label="Ad plays today" value={kpis.adPlaysToday.toLocaleString()} />
-      <Tile label="Impressions today" value={kpis.audienceImpressionsToday.toLocaleString()} sub="people reached" />
-      <Tile label="Revenue today" value={money.format(kpis.revenueToday)} sub={kpis.currency} />
-      <Tile label="Active campaigns" value={kpis.activeCampaigns.toLocaleString()} />
-      <Tile label="Avg latency" value={`${Math.round(kpis.averageLatencyMs)} ms`} />
-      <Tile label="Open incidents" value={kpis.openIncidents.toLocaleString()} alert={kpis.openIncidents > 0} />
-      <Tile label="Delayed departures" value={kpis.delayedDepartures.toLocaleString()} alert={kpis.delayedDepartures > 0} />
+      <Tile label={t('kpi.screensOnline')} value={`${kpis.screensOnlinePct.toFixed(1)}%`} sub={t('kpi.of', { n: kpis.screensTotal })} />
+      <Tile label={t('kpi.adPlays')} value={num(kpis.adPlaysToday)} />
+      <Tile label={t('kpi.impressions')} value={num(kpis.audienceImpressionsToday)} sub={t('kpi.peopleReached')} />
+      <Tile label={t('kpi.revenue')} value={money(kpis.revenueToday, kpis.currency)} sub={kpis.currency} />
+      <Tile label={t('kpi.activeCampaigns')} value={num(kpis.activeCampaigns)} />
+      <Tile label={t('kpi.latency')} value={`${Math.round(kpis.averageLatencyMs)} ms`} />
+      <Tile label={t('kpi.openIncidents')} value={num(kpis.openIncidents)} alert={kpis.openIncidents > 0} />
+      <Tile label={t('kpi.delayed')} value={num(kpis.delayedDepartures)} alert={kpis.delayedDepartures > 0} />
     </div>
   );
 }

@@ -242,12 +242,12 @@ public class MediaManagerService {
         Creative creative = creatives.firstForCampaign(c.id).orElse(null);
         List<String> problems = creative == null
                 ? List.of("no creative attached")
-                : CreativeQa.problems(creative.headline, creative.offerText, creative.body, creative.language);
+                : CreativeQa.problems(creative);
         return new ApprovalItem(c.id, c.name, c.advertiser.name, c.createdAt, c.scheduleStart, c.scheduleEnd,
                 c.budget,
                 creative != null ? creative.headline : null,
                 creative != null ? creative.offerText : null,
-                creative != null ? creative.language : null,
+                creative != null ? creative.languages() : List.of(),
                 problems);
     }
 

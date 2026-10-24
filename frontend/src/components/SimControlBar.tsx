@@ -1,8 +1,11 @@
 import { useCallback, useState } from 'react';
+import { useI18n } from '../i18n/I18nProvider';
+import type { MessageKey } from '../i18n/messages';
 import { sim } from '../server/api';
 import { useClock, useServerEvents, type ServerEvent } from '../server/stream';
 
 const SPEEDS = [1, 10, 60];
+const DELAYS = [45, 90, 150];
 
 // The simulated day; the jump input supplies the time-of-day (UTC).
 const SIM_DAY = '2026-10-23';
@@ -15,16 +18,18 @@ interface Props {
 
 export function SimControlBar({ focusScreenId }: Props) {
   const { clock } = useClock();
+  const { t, label } = useI18n();
   const [lastEvent, setLastEvent] = useState<string | null>(null);
   const [jumpTime, setJumpTime] = useState('14:10');
   const [delayMinutes, setDelayMinutes] = useState(45);
 
   useServerEvents(
     useCallback((event: ServerEvent) => {
-      setLastEvent(describe(event));
+      const described = describe(event, label);
+      setLastEvent(described ? t(...described) : event.type);
       const timer = setTimeout(() => setLastEvent(null), 6000);
       return () => clearTimeout(timer);
-    }, []),
+    }, [t, label]),
   );
 
   const running = clock?.running ?? false;
@@ -37,10 +42,10 @@ export function SimControlBar({ focusScreenId }: Props) {
         className="sim-bar__play"
         onClick={() => (running ? sim.pause() : sim.play())}
       >
-        {running ? '⏸ Pause' : '▶ Play'}
+        {running ? t('sim.pause') : t('sim.play')}
       </button>
 
-      <div className="sim-bar__speeds" role="group" aria-label="Speed">
+      <div className="sim-bar__speeds" role="group" aria-label={t('sim.speed')}>
         {SPEEDS.map((s) => (
           <button
             key={s}
@@ -53,36 +58,34 @@ export function SimControlBar({ focusScreenId }: Props) {
         ))}
       </div>
 
-      <div className="sim-bar__jump" role="group" aria-label="Jump to time">
+      <div className="sim-bar__jump" role="group" aria-label={t('sim.jumpGroup')}>
         <input
           type="time"
-          aria-label="Jump to time (UTC)"
+          aria-label={t('sim.jumpInput')}
           value={jumpTime}
           onChange={(e) => setJumpTime(e.target.value)}
         />
         <button type="button" onClick={() => sim.jump(`${SIM_DAY}T${jumpTime}:00Z`)}>
-          Jump
+          {t('sim.jump')}
         </button>
         <button type="button" onClick={() => sim.jump(WORKED_EXAMPLE_TIME)}>
-          → 14:10 (Gate 42)
+          {t('sim.gate42')}
         </button>
       </div>
 
-      <div className="sim-bar__inject" role="group" aria-label="Inject event">
-        <span className="sim-bar__label">Inject:</span>
-        <button type="button" onClick={() => sim.injectDelay(delayMinutes, focusScreenId)}>Delay flight</button>
+      <div className="sim-bar__inject" role="group" aria-label={t('sim.injectGroup')}>
+        <span className="sim-bar__label">{t('sim.inject')}</span>
+        <button type="button" onClick={() => sim.injectDelay(delayMinutes, focusScreenId)}>{t('sim.delay')}</button>
         <select
           value={delayMinutes}
           onChange={(e) => setDelayMinutes(Number(e.target.value))}
-          aria-label="Delay length"
+          aria-label={t('sim.delayLength')}
         >
-          <option value={45}>45 min</option>
-          <option value={90}>90 min</option>
-          <option value={150}>150 min</option>
+          {DELAYS.map((m) => <option key={m} value={m}>{t('common.minutes', { n: m })}</option>)}
         </select>
-        <button type="button" onClick={() => sim.injectGateChange(focusScreenId)}>Gate change</button>
-        <button type="button" onClick={() => sim.injectScreenOffline(focusScreenId)}>Screen offline</button>
-        <button type="button" onClick={() => sim.injectScreenOnline(focusScreenId)}>Screen online</button>
+        <button type="button" onClick={() => sim.injectGateChange(focusScreenId)}>{t('sim.gateChange')}</button>
+        <button type="button" onClick={() => sim.injectScreenOffline(focusScreenId)}>{t('sim.screenOffline')}</button>
+        <button type="button" onClick={() => sim.injectScreenOnline(focusScreenId)}>{t('sim.screenOnline')}</button>
       </div>
 
       {lastEvent && <div className="sim-bar__toast">{lastEvent}</div>}
@@ -90,26 +93,30 @@ export function SimControlBar({ focusScreenId }: Props) {
   );
 }
 
-function describe(event: ServerEvent): string {
-  const data = event.data as Record<string, unknown>;
+/** The toast for a live event, as a catalog key and its values. */
+function describe(
+  event: ServerEvent,
+  label: (group: string, value: string) => string,
+): [MessageKey, Record<string, string | number>] | null {
+  const data = event.data as Record<string, string | number>;
   switch (event.type) {
     case 'flight-delayed':
-      return `✈ ${data.flightNumber} delayed ${data.delayMinutes} min`;
+      return ['event.flightDelayed', { flight: data.flightNumber, minutes: data.delayMinutes }];
     case 'gate-changed':
-      return `🚪 ${data.flightNumber} moved to gate ${data.newGate}`;
+      return ['event.gateChanged', { flight: data.flightNumber, gate: data.newGate }];
     case 'screen-offline':
-      return `🖥 Screen ${data.code} went offline`;
+      return ['event.screenOffline', { code: data.code }];
     case 'screen-online':
-      return `🖥 Screen ${data.code} is back online`;
+      return ['event.screenOnline', { code: data.code }];
     case 'redemption':
-      return `🎟 Offer claimed (${data.code})`;
+      return ['event.redemption', { code: data.code }];
     case 'scan':
-      return `📱 QR scanned (${data.code})`;
+      return ['event.scan', { code: data.code }];
     case 'incident':
-      return '⚠ Incidents updated';
+      return ['event.incident', {}];
     case 'goodwill':
-      return `🎁 ${data.flightNumber}: ${String(data.voucher).toLowerCase()} voucher with ${data.partner} at gate ${data.gate}`;
+      return ['event.goodwill', { flight: data.flightNumber, voucher: label('voucher', String(data.voucher)), partner: data.partner, gate: data.gate }];
     default:
-      return event.type;
+      return null;
   }
 }

@@ -17,6 +17,7 @@ import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
 import java.time.Instant;
 import java.util.List;
+import com.airportmedia.platform.domain.entity.Creative;
 import org.junit.jupiter.api.Test;
 
 @QuarkusTest
@@ -93,5 +94,18 @@ class DelayGoodwillServiceTest {
         goodwill.scan();
 
         assertThat(vouchers(flight)).singleElement().satisfies(c -> assertThat(c.name).contains("lounge pass"));
+    }
+
+    @Test
+    void theGoodwillVoucherCopyIsWrittenInEnglishAndSpanish() {
+        clock.jumpTo(NOW);
+        Flight flight = upcomingDeparture();
+
+        simulation.injectDelay(flight.id, 90, null);
+
+        Creative creative = em.createQuery("from Creative where campaign.id = :c", Creative.class)
+                .setParameter("c", vouchers(flight).get(0).id).getSingleResult();
+        assertThat(creative.copyIn("es").language()).isEqualTo("es");
+        assertThat(creative.copyIn("es").offerText()).contains(flight.flightNumber).startsWith("Comida gratis");
     }
 }

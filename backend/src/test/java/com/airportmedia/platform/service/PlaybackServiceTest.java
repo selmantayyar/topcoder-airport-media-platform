@@ -142,4 +142,20 @@ class PlaybackServiceTest {
         em.persist(ga);
         return f;
     }
+
+    @Test
+    void playbackRendersTheAdInTheRequestedLanguage() {
+        clock.jumpTo(GATE_42_TIME);
+        Screen screen = gate42Screen();
+
+        PlaybackView english = playback.playback(screen.id, "en");
+        PlaybackView spanish = playback.playback(screen.id, "es");
+
+        assertThat(english.creative().language()).isEqualTo("en");
+        assertThat(english.creative().offerText()).isEqualTo("15% off perfume");
+        assertThat(spanish.creative().language()).isEqualTo("es");
+        assertThat(spanish.creative().offerText()).isEqualTo("15% de descuento en perfumes");
+        assertThat(spanish.creative().body()).doesNotContain("Limited-time");
+        assertThat(spanish.decision().winnerCampaignId()).isEqualTo(english.decision().winnerCampaignId());
+    }
 }
