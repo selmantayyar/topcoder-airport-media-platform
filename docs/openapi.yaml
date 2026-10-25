@@ -1,0 +1,2324 @@
+---
+openapi: 3.1.0
+components:
+  schemas:
+    AdPage:
+      type: object
+      properties:
+        creativeId:
+          type: integer
+          format: int64
+        language:
+          type: string
+        templateKey:
+          type: string
+        headline:
+          type: string
+        offerText:
+          type: string
+        body:
+          type: string
+    AdminOverview:
+      type: object
+      properties:
+        kpis:
+          $ref: "#/components/schemas/Kpis"
+        terminals:
+          type: array
+          items:
+            $ref: "#/components/schemas/TerminalMap"
+        incidents:
+          type: array
+          items:
+            $ref: "#/components/schemas/IncidentView"
+        incidentOwners:
+          type: array
+          items:
+            type: string
+    AdvertiserKind:
+      type: string
+      enum:
+      - RETAILER
+      - FNB
+      - AIRLINE
+    AdvertiserOverviewRow:
+      type: object
+      properties:
+        advertiserId:
+          type: integer
+          format: int64
+        name:
+          type: string
+        kind:
+          type: string
+        spend:
+          type: number
+        impressions:
+          type: integer
+          format: int64
+        redemptions:
+          type: integer
+          format: int64
+        runningCampaigns:
+          type: integer
+          format: int32
+        underDelivering:
+          type: array
+          items:
+            $ref: "#/components/schemas/UnderDelivery"
+    AirlineContentRow:
+      type: object
+      properties:
+        campaignId:
+          type: integer
+          format: int64
+        name:
+          type: string
+        purpose:
+          type: string
+        status:
+          type: string
+        flightNumber:
+          type: string
+        gate:
+          type: string
+        scheduleStart:
+          $ref: "#/components/schemas/Instant"
+        scheduleEnd:
+          $ref: "#/components/schemas/Instant"
+        coFunderName:
+          type: string
+        headline:
+          type: string
+        offerText:
+          type: string
+    AirlineFlightRow:
+      type: object
+      properties:
+        flightId:
+          type: integer
+          format: int64
+        flightNumber:
+          type: string
+        destination:
+          type: string
+        gate:
+          type: string
+        scheduledTime:
+          $ref: "#/components/schemas/Instant"
+        departureTime:
+          $ref: "#/components/schemas/Instant"
+        status:
+          type: string
+        delayMinutes:
+          type: integer
+          format: int32
+        paxCount:
+          type: integer
+          format: int32
+        seats:
+          type: integer
+          format: int32
+        loadFactorPct:
+          type: number
+          format: double
+        minutesToDeparture:
+          type: integer
+          format: int64
+    AirlineSummary:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        iataCode:
+          type: string
+        name:
+          type: string
+        lowCost:
+          type: boolean
+    ApprovalItem:
+      type: object
+      properties:
+        campaignId:
+          type: integer
+          format: int64
+        name:
+          type: string
+        advertiserName:
+          type: string
+        createdAt:
+          $ref: "#/components/schemas/Instant"
+        scheduleStart:
+          $ref: "#/components/schemas/Instant"
+        scheduleEnd:
+          $ref: "#/components/schemas/Instant"
+        budget:
+          type: number
+        headline:
+          type: string
+        offerText:
+          type: string
+        languages:
+          type: array
+          items:
+            type: string
+        creativeProblems:
+          type: array
+          items:
+            type: string
+    AudienceMatch:
+      type: object
+      properties:
+        targetedScreens:
+          type: integer
+          format: int32
+        eligibleScreens:
+          type: integer
+          format: int32
+        winningScreens:
+          type: integer
+          format: int32
+        matchPercent:
+          type: number
+          format: double
+        expectedImpressionsPerHour:
+          type: number
+          format: double
+        expectedRedemptionsPerHour:
+          type: number
+          format: double
+    BuilderOptions:
+      type: object
+      properties:
+        zones:
+          type: array
+          items:
+            $ref: "#/components/schemas/ZoneOption"
+        destinations:
+          type: array
+          items:
+            type: string
+        upcomingFlights:
+          type: array
+          items:
+            $ref: "#/components/schemas/FlightOption"
+    CampaignDraft:
+      type: object
+      required:
+      - advertiserId
+      - name
+      - scheduleStart
+      - scheduleEnd
+      - budget
+      properties:
+        advertiserId:
+          type: integer
+          format: int64
+        name:
+          type: string
+          pattern: \S
+          maxLength: 120
+        creativeId:
+          type: integer
+          format: int64
+        headline:
+          type: string
+          maxLength: 200
+        offerText:
+          type: string
+          maxLength: 200
+        body:
+          type: string
+          maxLength: 1000
+        language:
+          type: string
+          maxLength: 8
+        translations:
+          type: array
+          items:
+            $ref: "#/components/schemas/CopyTranslationDraft"
+        gates:
+          type: array
+          uniqueItems: true
+          items:
+            type: string
+        zoneIds:
+          type: array
+          uniqueItems: true
+          items:
+            type: integer
+            format: int64
+        screenIds:
+          type: array
+          uniqueItems: true
+          items:
+            type: integer
+            format: int64
+        destinations:
+          type: array
+          uniqueItems: true
+          items:
+            type: string
+        haul:
+          $ref: "#/components/schemas/Haul"
+        minDwellMinutes:
+          type: integer
+          format: int32
+          minimum: 0
+        minDelayMinutes:
+          type: integer
+          format: int32
+          minimum: 0
+        minCrowd:
+          type: integer
+          format: int32
+          minimum: 0
+        weightBusiness:
+          type: number
+          format: double
+          minimum: 0
+        weightHoliday:
+          type: number
+          format: double
+          minimum: 0
+        weightFamily:
+          type: number
+          format: double
+          minimum: 0
+        spendTarget:
+          $ref: "#/components/schemas/SpendTier"
+        scheduleStart:
+          $ref: "#/components/schemas/Instant"
+        scheduleEnd:
+          $ref: "#/components/schemas/Instant"
+        budget:
+          type: number
+          exclusiveMinimum: 0
+        dailyCap:
+          type: number
+          exclusiveMinimum: 0
+        frequencyCapPerScreen:
+          type: integer
+          format: int32
+          maximum: 50
+          minimum: 1
+        scheduleOrdered:
+          type: boolean
+        creativeProvided:
+          type: boolean
+    CampaignHistoryRow:
+      type: object
+      properties:
+        campaignId:
+          type: integer
+          format: int64
+        name:
+          type: string
+        status:
+          type: string
+        scheduleStart:
+          $ref: "#/components/schemas/Instant"
+        scheduleEnd:
+          $ref: "#/components/schemas/Instant"
+        budget:
+          type: number
+        spend:
+          type: number
+        impressions:
+          type: integer
+          format: int64
+        redemptions:
+          type: integer
+          format: int64
+        revenue:
+          type: number
+        roi:
+          type: number
+          format: double
+    CampaignMetric:
+      type: object
+      properties:
+        campaignId:
+          type: integer
+          format: int64
+        name:
+          type: string
+        status:
+          type: string
+        impressions:
+          type: integer
+          format: int64
+        scans:
+          type: integer
+          format: int64
+        redemptions:
+          type: integer
+          format: int64
+        revenue:
+          type: number
+    CandidateScore:
+      type: object
+      properties:
+        campaignId:
+          type: integer
+          format: int64
+        campaignName:
+          type: string
+        advertiserName:
+          type: string
+        advertiserKind:
+          $ref: "#/components/schemas/AdvertiserKind"
+        eligible:
+          type: boolean
+        dropReason:
+          type: string
+        crowdFit:
+          type: number
+          format: double
+        boardingProximity:
+          type: number
+          format: double
+        dwellFit:
+          type: number
+          format: double
+        spendMatch:
+          type: number
+          format: double
+        engagementPrior:
+          type: number
+          format: double
+        baseScore:
+          type: number
+          format: double
+        ruleNotes:
+          type: array
+          items:
+            type: string
+        ruleMultiplier:
+          type: number
+          format: double
+        finalScore:
+          type: number
+          format: double
+    ClaimResult:
+      type: object
+      properties:
+        status:
+          $ref: "#/components/schemas/ClaimStatus"
+        code:
+          type: string
+        campaignId:
+          type: integer
+          format: int64
+        campaignName:
+          type: string
+        offerText:
+          type: string
+        validUntil:
+          $ref: "#/components/schemas/Instant"
+        redeemedAt:
+          $ref: "#/components/schemas/Instant"
+        segment:
+          type: string
+        message:
+          type: string
+    ClaimStatus:
+      type: string
+      enum:
+      - CLAIMED
+      - ALREADY_CLAIMED
+      - EXPIRED
+    ClockSnapshot:
+      type: object
+      properties:
+        simTime:
+          $ref: "#/components/schemas/Instant"
+        speed:
+          type: integer
+          format: int32
+        running:
+          type: boolean
+    CopyTranslationDraft:
+      type: object
+      required:
+      - language
+      - headline
+      properties:
+        language:
+          type: string
+          pattern: "[a-zA-Z]{2}"
+        headline:
+          type: string
+          pattern: \S
+          maxLength: 200
+        offerText:
+          type: string
+          maxLength: 200
+        body:
+          type: string
+          maxLength: 1000
+    CreativeBrief:
+      type: object
+      required:
+      - brief
+      properties:
+        brief:
+          type: string
+          pattern: \S
+          maxLength: 300
+    CreativeSummary:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        campaignId:
+          type: integer
+          format: int64
+        campaignName:
+          type: string
+        headline:
+          type: string
+        offerText:
+          type: string
+        body:
+          type: string
+        language:
+          type: string
+        templateKey:
+          type: string
+        languages:
+          type: array
+          items:
+            type: string
+    CreativeView:
+      type: object
+      properties:
+        advertiserName:
+          type: string
+        headline:
+          type: string
+        body:
+          type: string
+        offerText:
+          type: string
+        language:
+          type: string
+        templateKey:
+          type: string
+    CrowdProfile:
+      type: object
+      properties:
+        crowdSize:
+          type: integer
+          format: int32
+        tripPurpose:
+          type: object
+          additionalProperties:
+            type: integer
+            format: int32
+        partyType:
+          type: object
+          additionalProperties:
+            type: integer
+            format: int32
+        ageBand:
+          type: object
+          additionalProperties:
+            type: integer
+            format: int32
+        femalePct:
+          type: integer
+          format: int32
+        spendTier:
+          type: object
+          additionalProperties:
+            type: integer
+            format: int32
+        language:
+          type: string
+        region:
+          type: string
+        dwellMinutes:
+          type: integer
+          format: int32
+        delayed:
+          type: boolean
+        delayMinutes:
+          type: integer
+          format: int32
+    DashboardMetrics:
+      type: object
+      properties:
+        advertiserId:
+          type: integer
+          format: int64
+        advertiserName:
+          type: string
+        impressions:
+          type: integer
+          format: int64
+        scans:
+          type: integer
+          format: int64
+        redemptions:
+          type: integer
+          format: int64
+        conversionRate:
+          type: number
+          format: double
+        attributedRevenue:
+          type: number
+        campaigns:
+          type: array
+          items:
+            $ref: "#/components/schemas/CampaignMetric"
+    DecisionLogView:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        screenId:
+          type: integer
+          format: int64
+        screenCode:
+          type: string
+        zoneId:
+          type: integer
+          format: int64
+        decidedAt:
+          $ref: "#/components/schemas/Instant"
+        headcount:
+          type: integer
+          format: int32
+        winnerCampaignId:
+          type: integer
+          format: int64
+        winnerName:
+          type: string
+        reason:
+          type: string
+        fallback:
+          type: boolean
+        inputs:
+          $ref: "#/components/schemas/JsonNode"
+        profile:
+          $ref: "#/components/schemas/JsonNode"
+        candidates:
+          $ref: "#/components/schemas/JsonNode"
+    DecisionResult:
+      type: object
+      properties:
+        screenId:
+          type: integer
+          format: int64
+        zoneId:
+          type: integer
+          format: int64
+        decidedAt:
+          $ref: "#/components/schemas/Instant"
+        headcount:
+          type: integer
+          format: int32
+        profile:
+          $ref: "#/components/schemas/CrowdProfile"
+        candidates:
+          type: array
+          items:
+            $ref: "#/components/schemas/CandidateScore"
+        winnerCampaignId:
+          type: integer
+          format: int64
+        winnerName:
+          type: string
+        reason:
+          type: string
+        fallback:
+          type: boolean
+    FidsEntry:
+      type: object
+      properties:
+        flightNumber:
+          type: string
+        airlineName:
+          type: string
+        destination:
+          type: string
+        gate:
+          type: string
+        scheduledTime:
+          $ref: "#/components/schemas/Instant"
+        estimatedTime:
+          $ref: "#/components/schemas/Instant"
+        status:
+          type: string
+        minutesToDeparture:
+          type: integer
+          format: int64
+    Field:
+      type: object
+      properties:
+        name:
+          type: string
+        label:
+          type: string
+        type:
+          $ref: "#/components/schemas/FieldType"
+        required:
+          type: boolean
+        maxLength:
+          type: integer
+          format: int32
+        min:
+          type: number
+          format: double
+        max:
+          type: number
+          format: double
+        options:
+          type: array
+          items:
+            $ref: "#/components/schemas/Option"
+    FieldType:
+      type: string
+      enum:
+      - TEXT
+      - NUMBER
+      - BOOLEAN
+      - ENUM
+      - REF
+    FlightContribution:
+      type: object
+      properties:
+        flightId:
+          type: integer
+          format: int64
+        flightNumber:
+          type: string
+        gate:
+          type: string
+        destination:
+          type: string
+        minutesToDeparture:
+          type: integer
+          format: int64
+        passengers:
+          type: integer
+          format: int32
+    FlightOption:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        flightNumber:
+          type: string
+        destination:
+          type: string
+        gate:
+          type: string
+        departure:
+          $ref: "#/components/schemas/Instant"
+    FlowWindow:
+      type: object
+      properties:
+        minutes:
+          type: integer
+          format: int32
+        footfall:
+          type: integer
+          format: int32
+        topDestinations:
+          type: array
+          items:
+            $ref: "#/components/schemas/LabelCount"
+        topNationalities:
+          type: array
+          items:
+            $ref: "#/components/schemas/LabelCount"
+        delayedDepartures:
+          type: integer
+          format: int32
+        delayedPassengers:
+          type: integer
+          format: int32
+    ForecastDay:
+      type: object
+      properties:
+        date:
+          $ref: "#/components/schemas/LocalDate"
+        occupancyPct:
+          type: number
+          format: double
+        revenue:
+          type: number
+    GeneratedCreative:
+      type: object
+      properties:
+        brief:
+          type: string
+        provider:
+          type: string
+        pages:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdPage"
+        notes:
+          type: array
+          items:
+            type: string
+    Haul:
+      type: string
+      enum:
+      - DOMESTIC
+      - INTERNATIONAL
+    IncidentStatus:
+      type: string
+      enum:
+      - OPEN
+      - ACKNOWLEDGED
+      - RESOLVED
+    IncidentUpdate:
+      type: object
+      properties:
+        status:
+          $ref: "#/components/schemas/IncidentStatus"
+        owner:
+          type: string
+          minLength: 1
+          maxLength: 64
+    IncidentView:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        type:
+          type: string
+        severity:
+          type: string
+        owner:
+          type: string
+        status:
+          type: string
+        title:
+          type: string
+        detail:
+          type: string
+        raisedAt:
+          $ref: "#/components/schemas/Instant"
+        updatedAt:
+          $ref: "#/components/schemas/Instant"
+        resolvedAt:
+          $ref: "#/components/schemas/Instant"
+    Instant:
+      type: string
+      format: date-time
+      examples:
+      - 2022-03-10T16:15:50Z
+    InventoryView:
+      type: object
+      properties:
+        day:
+          $ref: "#/components/schemas/LocalDate"
+        hours:
+          type: array
+          items:
+            type: integer
+            format: int32
+        screens:
+          type: array
+          items:
+            $ref: "#/components/schemas/ScreenRow"
+        occupancyPct:
+          type: number
+          format: double
+        basePricePerHour:
+          type: number
+        premiumFootfallThreshold:
+          type: number
+          format: double
+        forecast:
+          type: array
+          items:
+            $ref: "#/components/schemas/ForecastDay"
+        forecastTotal:
+          type: number
+    JsonNode:
+      type: object
+      properties:
+        empty:
+          type: boolean
+        valueNode:
+          type: boolean
+        containerNode:
+          type: boolean
+        missingNode:
+          type: boolean
+        array:
+          type: boolean
+        object:
+          type: boolean
+        nodeType:
+          $ref: "#/components/schemas/JsonNodeType"
+        pojo:
+          type: boolean
+        number:
+          type: boolean
+        integralNumber:
+          type: boolean
+        floatingPointNumber:
+          type: boolean
+        short:
+          type: boolean
+        int:
+          type: boolean
+        long:
+          type: boolean
+        float:
+          type: boolean
+        double:
+          type: boolean
+        bigDecimal:
+          type: boolean
+        bigInteger:
+          type: boolean
+        textual:
+          type: boolean
+        boolean:
+          type: boolean
+        "null":
+          type: boolean
+        binary:
+          type: boolean
+    JsonNodeType:
+      type: string
+      enum:
+      - ARRAY
+      - BINARY
+      - BOOLEAN
+      - MISSING
+      - "NULL"
+      - NUMBER
+      - OBJECT
+      - POJO
+      - STRING
+    Kpis:
+      type: object
+      properties:
+        screensOnlinePct:
+          type: number
+          format: double
+        screensTotal:
+          type: integer
+          format: int32
+        adPlaysToday:
+          type: integer
+          format: int64
+        audienceImpressionsToday:
+          type: integer
+          format: int64
+        revenueToday:
+          type: number
+        currency:
+          type: string
+        activeCampaigns:
+          type: integer
+          format: int64
+        averageLatencyMs:
+          type: number
+          format: double
+        openIncidents:
+          type: integer
+          format: int64
+        delayedDepartures:
+          type: integer
+          format: int64
+    LabelCount:
+      type: object
+      properties:
+        label:
+          type: string
+        value:
+          type: integer
+          format: int32
+    LocalDate:
+      type: string
+      format: date
+      examples:
+      - 2022-03-10
+    MasterDataSchema:
+      type: object
+      properties:
+        type:
+          type: string
+        label:
+          type: string
+        fields:
+          type: array
+          items:
+            $ref: "#/components/schemas/Field"
+    Option:
+      type: object
+      properties:
+        value:
+          type: string
+        label:
+          type: string
+    OutletSummary:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        type:
+          type: string
+        zoneName:
+          type: string
+        terminalCode:
+          type: string
+    PassengerFlow:
+      type: object
+      properties:
+        next60:
+          $ref: "#/components/schemas/FlowWindow"
+        next120:
+          $ref: "#/components/schemas/FlowWindow"
+    PlaybackView:
+      type: object
+      properties:
+        screen:
+          $ref: "#/components/schemas/ScreenSummary"
+        at:
+          $ref: "#/components/schemas/Instant"
+        nearbyFlights:
+          type: array
+          items:
+            $ref: "#/components/schemas/FidsEntry"
+        decision:
+          $ref: "#/components/schemas/DecisionResult"
+        creative:
+          $ref: "#/components/schemas/CreativeView"
+        promo:
+          $ref: "#/components/schemas/PromoPlayback"
+    PromoInfo:
+      type: object
+      properties:
+        code:
+          type: string
+        campaignId:
+          type: integer
+          format: int64
+        campaignName:
+          type: string
+        advertiserName:
+          type: string
+        headline:
+          type: string
+        offerText:
+          type: string
+        validUntil:
+          $ref: "#/components/schemas/Instant"
+        redeemed:
+          type: boolean
+        expired:
+          type: boolean
+        secondsRemaining:
+          type: integer
+          format: int64
+    PromoIssued:
+      type: object
+      properties:
+        code:
+          type: string
+        parentCode:
+          type: string
+        campaignId:
+          type: integer
+          format: int64
+        validUntil:
+          $ref: "#/components/schemas/Instant"
+        expiresAt:
+          $ref: "#/components/schemas/Instant"
+        linkedFlightNumber:
+          type: string
+        claimPath:
+          type: string
+    PromoPlayback:
+      type: object
+      properties:
+        code:
+          type: string
+        validUntil:
+          $ref: "#/components/schemas/Instant"
+        secondsRemaining:
+          type: integer
+          format: int64
+        claimPath:
+          type: string
+    PromoRequest:
+      type: object
+      properties:
+        flightId:
+          type: integer
+          format: int64
+        validMinutes:
+          type: integer
+          format: int32
+          maximum: 1440
+          minimum: 5
+    RetailerSummary:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        kind:
+          type: string
+        outletCount:
+          type: integer
+          format: int32
+    ScreenDot:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        code:
+          type: string
+        status:
+          type: string
+        latencyMs:
+          type: integer
+          format: int32
+        statusSince:
+          $ref: "#/components/schemas/Instant"
+    ScreenRow:
+      type: object
+      properties:
+        screenId:
+          type: integer
+          format: int64
+        code:
+          type: string
+        zoneId:
+          type: integer
+          format: int64
+        zoneName:
+          type: string
+        slots:
+          type: array
+          items:
+            $ref: "#/components/schemas/Slot"
+    ScreenSummary:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        code:
+          type: string
+        name:
+          type: string
+        zoneId:
+          type: integer
+          format: int64
+        zoneName:
+          type: string
+        nearestGates:
+          type: string
+        orientation:
+          type: string
+        status:
+          type: string
+    ServerEvent:
+      type: object
+      properties:
+        type:
+          type: string
+        at:
+          $ref: "#/components/schemas/Instant"
+        data: {}
+    Slot:
+      type: object
+      properties:
+        hour:
+          type: integer
+          format: int32
+        booked:
+          type: boolean
+        premium:
+          type: boolean
+        footfall:
+          type: integer
+          format: int32
+        price:
+          type: number
+    SlotRecommendation:
+      type: object
+      properties:
+        rank:
+          type: integer
+          format: int32
+        zoneId:
+          type: integer
+          format: int64
+        zoneName:
+          type: string
+        start:
+          $ref: "#/components/schemas/Instant"
+        end:
+          $ref: "#/components/schemas/Instant"
+        predictedImpressions:
+          type: integer
+          format: int64
+        winningScreens:
+          type: integer
+          format: int32
+        peakHeadcount:
+          type: integer
+          format: int32
+        averageScore:
+          type: number
+          format: double
+    SlotRecommendations:
+      type: object
+      properties:
+        campaignId:
+          type: integer
+          format: int64
+        campaignName:
+          type: string
+        day:
+          $ref: "#/components/schemas/LocalDate"
+        slots:
+          type: array
+          items:
+            $ref: "#/components/schemas/SlotRecommendation"
+        method:
+          type: string
+    SpendTier:
+      type: string
+      enum:
+      - LOW
+      - MEDIUM
+      - HIGH
+    SponsoredContentRequest:
+      type: object
+      required:
+      - flightId
+      - type
+      properties:
+        flightId:
+          type: integer
+          format: int64
+        type:
+          $ref: "#/components/schemas/SponsoredContentType"
+        headline:
+          type: string
+          maxLength: 60
+        offerText:
+          type: string
+          maxLength: 80
+    SponsoredContentType:
+      type: string
+      enum:
+      - UPGRADE_OFFER
+      - LOUNGE_PASS
+      - DESTINATION_PARTNER
+    TerminalMap:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        code:
+          type: string
+        name:
+          type: string
+        zones:
+          type: array
+          items:
+            $ref: "#/components/schemas/ZoneMap"
+    UnderDelivery:
+      type: object
+      properties:
+        campaignId:
+          type: integer
+          format: int64
+        name:
+          type: string
+        deliveredPct:
+          type: number
+          format: double
+        expectedPct:
+          type: number
+          format: double
+        pacePct:
+          type: number
+          format: double
+    ZoneKind:
+      type: string
+      enum:
+      - CONCOURSE
+      - GATE_AREA
+      - CHECKPOINT
+      - CHECKIN
+      - RETAIL
+      - ARRIVALS
+    ZoneMap:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        kind:
+          type: string
+        headcount:
+          type: integer
+          format: int32
+        heat:
+          type: number
+          format: double
+        screens:
+          type: array
+          items:
+            $ref: "#/components/schemas/ScreenDot"
+    ZoneOption:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        kind:
+          type: string
+        terminalCode:
+          type: string
+    ZonePresence:
+      type: object
+      properties:
+        zoneId:
+          type: integer
+          format: int64
+        zoneName:
+          type: string
+        zoneKind:
+          $ref: "#/components/schemas/ZoneKind"
+        windowStart:
+          $ref: "#/components/schemas/Instant"
+        windowMinutes:
+          type: integer
+          format: int32
+        estimatedHeadcount:
+          type: integer
+          format: int32
+        flights:
+          type: array
+          items:
+            $ref: "#/components/schemas/FlightContribution"
+        profile:
+          $ref: "#/components/schemas/CrowdProfile"
+paths:
+  /api/admin/incidents/{id}:
+    patch:
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IncidentUpdate"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IncidentView"
+      summary: Update Incident
+      tags:
+      - Admin Resource
+  /api/admin/master:
+    get:
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MasterDataSchema"
+      summary: Schemas
+      tags:
+      - Admin Resource
+  /api/admin/master/{type}:
+    get:
+      parameters:
+      - name: type
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  additionalProperties: {}
+      summary: List
+      tags:
+      - Admin Resource
+    post:
+      parameters:
+      - name: type
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: {}
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+        "400":
+          description: Bad Request
+      summary: Create
+      tags:
+      - Admin Resource
+  /api/admin/master/{type}/{id}:
+    put:
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: type
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: {}
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+        "400":
+          description: Bad Request
+      summary: Update
+      tags:
+      - Admin Resource
+  /api/admin/overview:
+    get:
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminOverview"
+      summary: Overview
+      tags:
+      - Admin Resource
+  /api/airlines:
+    get:
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AirlineSummary"
+      summary: Airlines
+      tags:
+      - Airline Resource
+  /api/airlines/{id}/content:
+    post:
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SponsoredContentRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AirlineContentRow"
+        "400":
+          description: Bad Request
+      summary: Schedule
+      tags:
+      - Airline Resource
+    get:
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AirlineContentRow"
+      summary: Content
+      tags:
+      - Airline Resource
+  /api/airlines/{id}/flights:
+    get:
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AirlineFlightRow"
+      summary: Flights
+      tags:
+      - Airline Resource
+  /api/campaigns:
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CampaignDraft"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CampaignHistoryRow"
+        "400":
+          description: Bad Request
+      summary: Create
+      tags:
+      - Campaign Resource
+  /api/campaigns/options:
+    get:
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BuilderOptions"
+      summary: Options
+      tags:
+      - Campaign Resource
+  /api/campaigns/preview:
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CampaignDraft"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AudienceMatch"
+        "400":
+          description: Bad Request
+      summary: Preview
+      tags:
+      - Campaign Resource
+  /api/campaigns/{id}/draft:
+    get:
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CampaignDraft"
+      summary: Draft
+      tags:
+      - Campaign Resource
+  /api/campaigns/{id}/promo-codes:
+    post:
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PromoRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PromoIssued"
+        "400":
+          description: Bad Request
+      summary: Issue Promo
+      tags:
+      - Campaign Resource
+  /api/campaigns/{id}/recommended-slots:
+    get:
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SlotRecommendations"
+      summary: Recommended Slots
+      tags:
+      - Campaign Resource
+  /api/campaigns/{id}/run-again:
+    post:
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CampaignHistoryRow"
+      summary: Run Again
+      tags:
+      - Campaign Resource
+  /api/decisions:
+    get:
+      parameters:
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          format: int32
+      - name: screenId
+        in: query
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DecisionLogView"
+      summary: Decisions
+      tags:
+      - Decision Resource
+  /api/decisions/{id}:
+    get:
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DecisionLogView"
+      summary: Decision
+      tags:
+      - Decision Resource
+  /api/media/advertisers:
+    get:
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AdvertiserOverviewRow"
+      summary: Advertisers
+      tags:
+      - Media Resource
+  /api/media/approvals:
+    get:
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ApprovalItem"
+      summary: Approvals
+      tags:
+      - Media Resource
+  /api/media/approvals/{id}/approve:
+    post:
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApprovalItem"
+      summary: Approve
+      tags:
+      - Media Resource
+  /api/media/approvals/{id}/reject:
+    post:
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApprovalItem"
+      summary: Reject
+      tags:
+      - Media Resource
+  /api/media/inventory:
+    get:
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InventoryView"
+      summary: Inventory
+      tags:
+      - Media Resource
+  /api/presence:
+    get:
+      parameters:
+      - name: at
+        in: query
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ZonePresence"
+      summary: Zones
+      tags:
+      - Presence Resource
+  /api/presence/flights/{flightId}/profile:
+    get:
+      parameters:
+      - name: flightId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CrowdProfile"
+      summary: Flight Profile
+      tags:
+      - Presence Resource
+  /api/promo/{code}:
+    get:
+      parameters:
+      - name: code
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: lang
+        in: query
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PromoInfo"
+      summary: Info
+      tags:
+      - Claim Resource
+  /api/promo/{code}/claim:
+    post:
+      parameters:
+      - name: code
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: lang
+        in: query
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClaimResult"
+      summary: Claim
+      tags:
+      - Claim Resource
+  /api/promo/{code}/scan:
+    post:
+      parameters:
+      - name: code
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "201":
+          description: Created
+      summary: Scan
+      tags:
+      - Claim Resource
+  /api/promo/{code}/share:
+    post:
+      parameters:
+      - name: code
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PromoIssued"
+      summary: Share
+      tags:
+      - Claim Resource
+  /api/retailers:
+    get:
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RetailerSummary"
+      summary: Retailers
+      tags:
+      - Retailer Resource
+  /api/retailers/{id}/campaigns:
+    get:
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CampaignHistoryRow"
+      summary: Campaigns
+      tags:
+      - Retailer Resource
+  /api/retailers/{id}/creatives:
+    get:
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CreativeSummary"
+      summary: Creatives
+      tags:
+      - Retailer Resource
+  /api/retailers/{id}/creatives/assistant:
+    post:
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreativeBrief"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GeneratedCreative"
+        "400":
+          description: Bad Request
+      summary: Generate Creative
+      tags:
+      - Retailer Resource
+  /api/retailers/{id}/flow:
+    get:
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: outletId
+        in: query
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PassengerFlow"
+      summary: Flow
+      tags:
+      - Retailer Resource
+  /api/retailers/{id}/metrics:
+    get:
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardMetrics"
+      summary: Metrics
+      tags:
+      - Retailer Resource
+  /api/retailers/{id}/outlets:
+    get:
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/OutletSummary"
+      summary: Outlets
+      tags:
+      - Retailer Resource
+  /api/screens:
+    get:
+      parameters:
+      - name: gate
+        in: query
+        schema:
+          type: string
+      - name: zone
+        in: query
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ScreenSummary"
+      summary: Screens
+      tags:
+      - Screen Resource
+  /api/screens/{id}/decision:
+    get:
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DecisionResult"
+      summary: Current Decision
+      tags:
+      - Screen Resource
+  /api/screens/{id}/decision/run:
+    post:
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DecisionResult"
+      summary: Run Decision
+      tags:
+      - Screen Resource
+  /api/screens/{id}/playback:
+    get:
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: lang
+        in: query
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlaybackView"
+      summary: Playback
+      tags:
+      - Screen Resource
+  /api/sim/inject/delay:
+    post:
+      parameters:
+      - name: flightId
+        in: query
+        schema:
+          type: integer
+          format: int64
+      - name: minutes
+        in: query
+        schema:
+          type: integer
+          format: int32
+      - name: screenId
+        in: query
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServerEvent"
+      summary: Inject Delay
+      tags:
+      - Simulation Control Resource
+  /api/sim/inject/gate-change:
+    post:
+      parameters:
+      - name: flightId
+        in: query
+        schema:
+          type: integer
+          format: int64
+      - name: gate
+        in: query
+        schema:
+          type: string
+      - name: screenId
+        in: query
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServerEvent"
+      summary: Inject Gate Change
+      tags:
+      - Simulation Control Resource
+  /api/sim/inject/screen-offline:
+    post:
+      parameters:
+      - name: screenId
+        in: query
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServerEvent"
+      summary: Inject Screen Offline
+      tags:
+      - Simulation Control Resource
+  /api/sim/inject/screen-online:
+    post:
+      parameters:
+      - name: screenId
+        in: query
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServerEvent"
+      summary: Inject Screen Online
+      tags:
+      - Simulation Control Resource
+  /api/sim/jump:
+    post:
+      parameters:
+      - name: time
+        in: query
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClockSnapshot"
+      summary: Jump
+      tags:
+      - Simulation Control Resource
+  /api/sim/pause:
+    post:
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClockSnapshot"
+      summary: Pause
+      tags:
+      - Simulation Control Resource
+  /api/sim/play:
+    post:
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClockSnapshot"
+      summary: Play
+      tags:
+      - Simulation Control Resource
+  /api/sim/speed/{value}:
+    post:
+      parameters:
+      - name: value
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int32
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClockSnapshot"
+      summary: Speed
+      tags:
+      - Simulation Control Resource
+  /api/stream:
+    get:
+      responses:
+        "200":
+          description: OK
+          content:
+            text/event-stream:
+              schema:
+                $ref: "#/components/schemas/ServerEvent"
+      summary: Stream
+      tags:
+      - Stream Resource
+info:
+  title: Airport Retail Media Platform API
+  version: "1.0"
+  description: "REST + SSE API of the airport retail media POC: screens and playback,\
+    \ the decision pipeline, promo claims, retailer/media-manager/airline/admin views\
+    \ and the simulation controls. No authentication: roles are UI personas only.\
+    \ Live updates stream from GET /api/stream (Server-Sent Events)."
+servers:
+- url: http://localhost:8080
+  description: Auto generated value
+- url: http://0.0.0.0:8080
+  description: Auto generated value

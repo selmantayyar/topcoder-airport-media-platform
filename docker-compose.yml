@@ -24,6 +24,10 @@ services:
       QUARKUS_DATASOURCE_USERNAME: airport
       QUARKUS_DATASOURCE_PASSWORD: airport
       QUARKUS_DATASOURCE_JDBC_URL: jdbc:postgresql://db:5432/airport
+      # Feed adapters (docs/adapter-guide.md): mock (default) or live, one value per source.
+      APP_FLIGHT_SOURCE: ${APP_FLIGHT_SOURCE:-mock}
+      APP_AIDX_SOURCE: ${APP_AIDX_SOURCE:-mock}
+      APP_ACRIS_SOURCE: ${APP_ACRIS_SOURCE:-mock}
       # Creative assistant: mock (offline, default) or llm. For llm, any OpenAI-compatible endpoint.
       APP_CREATIVE_ASSISTANT_PROVIDER: ${APP_CREATIVE_ASSISTANT_PROVIDER:-mock}
       # Quarkus rejects an empty value, so unset vars fall back to the same defaults as application.properties.

@@ -1,0 +1,5 @@
+# Injected simulation events flow through the real adapters
+
+The simulation's "inject event" actions (delay a flight, change a gate) do not write a canonical `FlightEvent` directly. Instead `SimulationService` serialises the change as an AIDX `FlightLegNotifRQ` message via the AIDX `FlightEventSource`, then translates it back through `AidxTranslator` — the exact path a live vendor feed would take — before persisting. This means an injected delay produces a canonical event with a real evidence trail (`message_ref`, source `AIDX`), and the demo's cause-and-effect is driven by the same pipeline that would run in production.
+
+The trade-off: business logic (`SimulationService`) deliberately touches an adapter's wire format, which the architecture otherwise forbids ("business logic depends only on canonical entities"). We accept this narrow, sanctioned exception because the whole point of the simulation is to exercise the feed path end to end; writing a `FlightEvent` directly would bypass the very translation the challenge asks us to prove. The exception is confined to the injection methods; everything downstream still sees only canonical entities.
