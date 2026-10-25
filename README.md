@@ -107,19 +107,8 @@ is the only place a re-brand touches (plus `frontend/public/favicon.svg`). **Lan
 
 ## Deployment
 
-The droplet runs the same `docker-compose.yml`. Only `.env` differs (`HTTP_PORT=80`). To redeploy after pushing
-to `main`, run one command:
-
-```bash
-ssh root@142.93.232.242 /root/topcoder-airport-media-platform/scripts/redeploy.sh
-```
-
-It pulls, rebuilds what changed, restarts, and waits until the API answers through nginx. Containers restart on
-reboot, and the database volume keeps the seeded day between deploys.
-
-First-time setup on a fresh Ubuntu droplet: install Docker Engine with the compose plugin, add a 2 GB swap file
-(the backend image builds with Maven in 2 GB of RAM), clone the repo, run `echo HTTP_PORT=80 > .env`, then run
-`scripts/redeploy.sh`.
+The playground runs the same `docker-compose.yml` on a DigitalOcean droplet; only `.env` differs
+(`HTTP_PORT=80`). `scripts/redeploy.sh` pulls the latest commit and rebuilds.
 
 ## Documentation
 
